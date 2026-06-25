@@ -1,4 +1,3 @@
-
 const seed = { sections: [] };
 let db = JSON.parse(localStorage.getItem('rcpro') || 'null') || seed;
 const save = () => localStorage.setItem('rcpro', JSON.stringify(db));
@@ -29,7 +28,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Renderiza texto com suporte a blocos de código (``` ```)
+// Renderiza texto com suporte a blocos de código (``` ```) e listas (- item)
 function renderText(text) {
     if (!text) return '';
     const parts = text.split(/```/);
@@ -41,11 +40,43 @@ function renderText(text) {
             div.textContent = code;
             return `<div class='code-block'>${div.innerHTML}</div>`;
         }
-        // texto normal: preserva quebras de linha
-        const div = document.createElement('div');
-        div.textContent = part;
-        return `<span style='white-space:pre-wrap'>${div.innerHTML}</span>`;
+        // texto normal: processa listas e preserva quebras de linha
+        return renderNormal(part);
     }).join('');
+}
+
+function renderNormal(text) {
+    if (!text) return '';
+    // Divide em blocos de linhas consecutivas que começam com "- " (lista) vs resto
+    const lines = text.split('\n');
+    const output = [];
+    let listItems = [];
+
+    const flushList = () => {
+        if (listItems.length) {
+            const esc = listItems.map(t => {
+                const d = document.createElement('div');
+                d.textContent = t;
+                return `<li>${d.innerHTML}</li>`;
+            }).join('');
+            output.push(`<ul class='render-list'>${esc}</ul>`);
+            listItems = [];
+        }
+    };
+
+    lines.forEach(line => {
+        if (/^- (.*)/.test(line)) {
+            listItems.push(line.replace(/^- /, ''));
+        } else {
+            flushList();
+            const div = document.createElement('div');
+            div.textContent = line;
+            output.push(`<span style='white-space:pre-wrap'>${div.innerHTML}</span><br>`);
+        }
+    });
+    flushList();
+
+    return output.join('');
 }
 
 // ── Modal genérico ──────────────────────────────────────────────
@@ -181,7 +212,7 @@ ${summaryHtml}
 
     s.cards.forEach((c, idx) => {
         html += `<div class='card'>
-<b>${escapeHtml(c.question)}</b>
+<div class='question-render'>${renderText(c.question)}</div>
 <div class='row' style='margin-top:10px'>
 <button class='edit-btn' data-si='${i}' data-ci='${idx}'>Editar</button>
 <button class='delete-btn' data-si='${i}' data-ci='${idx}'>Excluir</button>
@@ -288,8 +319,8 @@ function showQuestion() {
 <p>Pergunta ${quiz.idx + 1} de ${quiz.cards.length}</p>
 ${summaryHtml}
 <div class='card'>
-<h3>${escapeHtml(c.question)}</h3>
-${c.options.map((o, i) => `<div class='option'><button onclick='answer(${i})'>${escapeHtml(o)}</button></div>`).join('')}
+<h3 class='question-render'>${renderText(c.question)}</h3>
+${c.options.map((o, i) => `<div class='option'><button onclick='answer(${i})'><span class='option-render'>${renderText(o)}</span></button></div>`).join('')}
 <div id='fb'></div>
 </div>`;
 }
