@@ -6,7 +6,17 @@ function repairData() {
     if (!db.sections) return;
     db.sections.forEach(section => {
         if (!section.cards) section.cards = [];
-        if (!section.summary) section.summary = '';   // resumo agora é da seção
+        if (!section.concept && typeof section.summary === 'string') {
+            section.concept = { what: section.summary, why: '' };
+        }
+        delete section.summary;
+        if (!section.concept) section.concept = { what: '', why: '' };
+        if (!section.concept.what) section.concept.what = '';
+        if (!section.concept.why) section.concept.why = '';
+        if (!section.code) section.code = '';
+        if (!section.useCases) section.useCases = '';
+        if (!section.antiPatterns) section.antiPatterns = '';
+        if (!section.commonMistakes) section.commonMistakes = '';
         section.cards.forEach(card => {
             if (card.correct === null || card.correct === undefined || isNaN(card.correct)) card.correct = 0;
             if (!card.options) card.options = ['', '', '', ''];
@@ -92,7 +102,7 @@ function showModal(title, fields) {
             <h3 style='margin-top:0;margin-bottom:20px'>${title}</h3>`;
 
         fields.forEach((field, idx) => {
-            const isTextarea = ['Explicação','Pergunta','Analogia','Resumo','Alternativa'].some(k => field.label.includes(k));
+            const isTextarea = ['Explicação','Pergunta','Analogia','Resumo','Alternativa','que é','existe','usar','comuns','Código'].some(k => field.label.includes(k));
             const minHeight = field.label.includes('Alternativa') ? '44px' : '80px';
             const inputEl = isTextarea
                 ? `<textarea id='field${idx}' style='width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:14px;font-family:inherit;min-height:${minHeight};resize:vertical'>${field.value || ''}</textarea>`
@@ -160,13 +170,27 @@ function home() {
 }
 
 // ── Seções ──────────────────────────────────────────────────────
+const sectionFields = s => [
+    { label: 'Nome da seção', value: s?.name || '' },
+    { label: 'O que é (conceito)', value: s?.concept?.what || '' },
+    { label: 'Por que existe', value: s?.concept?.why || '' },
+    { label: 'Onde usar — casos reais', value: s?.useCases || '' },
+    { label: 'Onde não usar — limitações/trade-offs', value: s?.antiPatterns || '' },
+    { label: 'Erros comuns', value: s?.commonMistakes || '' }
+];
+
 document.getElementById('addSection').onclick = async () => {
-    const result = await showModal('Nova Seção', [
-        { label: 'Nome da seção', value: '' },
-        { label: 'Resumo Rápido (opcional) — cole aqui o conceito que os cartões vão testar', value: '' }
-    ]);
+    const result = await showModal('Nova Seção', sectionFields());
     if (result && result[0]) {
-        db.sections.push({ name: result[0], summary: result[1] || '', cards: [] });
+        db.sections.push({
+            name: result[0],
+            concept: { what: result[1] || '', why: result[2] || '' },
+            code: '',
+            useCases: result[3] || '',
+            antiPatterns: result[4] || '',
+            commonMistakes: result[5] || '',
+            cards: []
+        });
         save();
         home();
     }
@@ -174,15 +198,27 @@ document.getElementById('addSection').onclick = async () => {
 
 window.editSection = async (i) => {
     const s = db.sections[i];
-    const result = await showModal('Editar Seção', [
-        { label: 'Nome', value: s.name },
-        { label: 'Resumo Rápido', value: s.summary || '' }
-    ]);
+    const result = await showModal('Editar Seção', sectionFields(s));
     if (result && result[0]) {
         s.name = result[0];
-        s.summary = result[1] || '';
+        s.concept = { what: result[1] || '', why: result[2] || '' };
+        s.useCases = result[3] || '';
+        s.antiPatterns = result[4] || '';
+        s.commonMistakes = result[5] || '';
         save();
         home();
+    }
+};
+
+window.editSectionCode = async (i) => {
+    const s = db.sections[i];
+    const result = await showModal('Editar Código de Exemplo', [
+        { label: 'Código de exemplo (use ``` para destacar como bloco)', value: s.code || '' }
+    ]);
+    if (result) {
+        s.code = result[0] || '';
+        save();
+        openSection(i);
     }
 };
 
@@ -195,20 +231,39 @@ window.delSection = async (i) => {
 };
 
 // ── Abrir seção ─────────────────────────────────────────────────
+function panel(icon, title, editFn, bodyHtml, open) {
+    return `<details class='summary-panel'${open ? ' open' : ''}>
+        <summary>${icon} ${title}
+            <button class='panel-edit-btn' onclick='event.preventDefault();event.stopPropagation();${editFn}'>Editar</button>
+        </summary>
+        <div class='summary-body'>${bodyHtml}</div>
+       </details>`;
+}
+
 window.openSection = i => {
     const s = db.sections[i];
 
-    // Resumo rápido da seção — sempre visível no topo, expansível
-    const summaryHtml = s.summary
-        ? `<details class='summary-panel' open>
-            <summary>📋 Resumo Rápido — ${escapeHtml(s.name)}</summary>
-            <div class='summary-body'>${renderText(s.summary)}</div>
-           </details>`
-        : '';
+    let panels = '';
+
+    const conceptBody = (renderText(s.concept?.what) || '') +
+        (s.concept?.why ? `<p style='margin-top:10px'><strong>Por que existe:</strong></p>${renderText(s.concept.why)}` : '');
+    if (s.concept?.what || s.concept?.why) {
+        panels += panel('🧠', 'O que é / Por que existe', `editSection(${i})`, conceptBody, true);
+    }
+
+    if (s.code) {
+        panels += panel('💻', 'Código', `editSectionCode(${i})`, renderText(s.code), false);
+    } else {
+        panels += `<div class='row' style='margin-bottom:14px'><button onclick='editSectionCode(${i})'>+ Código de exemplo</button></div>`;
+    }
+
+    if (s.useCases) panels += panel('✅', 'Onde usar', `editSection(${i})`, renderText(s.useCases), false);
+    if (s.antiPatterns) panels += panel('🚫', 'Onde não usar', `editSection(${i})`, renderText(s.antiPatterns), false);
+    if (s.commonMistakes) panels += panel('⚠️', 'Erros comuns', `editSection(${i})`, renderText(s.commonMistakes), false);
 
     let html = `<button onclick='home()'>← Voltar</button>
 <h2>${escapeHtml(s.name)}</h2>
-${summaryHtml}
+${panels}
 <button onclick='newCard(${i})' style='margin-top:8px'>+ Cartão</button>`;
 
     s.cards.forEach((c, idx) => {
@@ -307,10 +362,11 @@ function showQuestion() {
     const pct = (quiz.idx / quiz.cards.length) * 100;
 
     // Resumo da seção aparece no quiz como dropdown fechado — consulta opcional
-    const summaryHtml = s.summary
+    const conceptText = s.concept?.what || '';
+    const summaryHtml = conceptText
         ? `<details class='summary-panel quiz-summary'>
-            <summary>📋 Consultar Resumo Rápido</summary>
-            <div class='summary-body'>${renderText(s.summary)}</div>
+            <summary>📋 Consultar Conceito</summary>
+            <div class='summary-body'>${renderText(conceptText)}</div>
            </details>`
         : '';
 
