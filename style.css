@@ -40,6 +40,8 @@ input,textarea,select{width:100%;padding:8px;margin:4px 0;border-radius:8px;bord
 .summary-panel summary::-webkit-details-marker{display:none}
 .summary-panel summary::after{content:'▸';margin-left:auto;transition:transform .2s}
 .summary-panel[open] summary::after{transform:rotate(90deg)}
+.panel-edit-btn{margin-left:auto;padding:4px 10px;font-size:.8rem;font-weight:600;background:rgba(165,180,252,.15);color:#a5b4fc;border-radius:6px}
+.panel-edit-btn:hover{background:rgba(165,180,252,.3)}
 .summary-body{
     padding:14px 16px 16px;font-size:.92rem;line-height:1.75;
     color:#c7d2fe;border-top:1px solid rgba(99,102,241,.2);
