@@ -1,6 +1,8 @@
 import { signIn } from '@/lib/actions/auth';
 import { accent, buttonPrimaryClass, inputClass } from '@/lib/ui';
 import { AuthBrandPanel } from '@/components/AuthBrandPanel';
+import { PasswordInput } from '@/components/PasswordInput';
+import { SubmitButton } from '@/components/SubmitButton';
 
 export default async function LoginPage({
   searchParams,
@@ -76,11 +78,11 @@ export default async function LoginPage({
               <span style={{ display: 'block', font: '500 13px var(--font-body)', color: '#55524B', marginBottom: 6 }}>
                 Senha
               </span>
-              <input name="password" type="password" required placeholder="••••••••" className={inputClass} />
+              <PasswordInput name="password" placeholder="••••••••" />
             </label>
-            <button type="submit" className={buttonPrimaryClass} style={{ marginTop: 4 }}>
+            <SubmitButton pendingText="Entrando…" className={buttonPrimaryClass} style={{ marginTop: 4 }}>
               Entrar
-            </button>
+            </SubmitButton>
           </form>
 
           <p style={{ fontSize: 14, color: '#6B6862', margin: '22px 0 0' }}>

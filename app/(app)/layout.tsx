@@ -40,8 +40,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Link href="/settings/tokens" className="rcp-navlink">
-            Tokens
+          <Link
+            href="/settings/tokens"
+            className="rcp-navlink"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <i className="ph-fill ph-robot" style={{ fontSize: 15 }} /> Tokens &amp; MCP
           </Link>
           <Link href="/import" className="rcp-navlink">
             Importar
