@@ -2,6 +2,13 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+  // Rotas app/api/v1/** usam autenticação por token (Authorization: Bearer),
+  // não sessão de cookie do Supabase — deixa passar direto para o handler,
+  // que resolve o próprio 401 se o token faltar ou for inválido.
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
