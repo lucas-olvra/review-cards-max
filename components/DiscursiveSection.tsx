@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import {
   createDiscursive,
@@ -68,6 +69,15 @@ function DiscursiveForm({
   );
 }
 
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0 },
+};
+
 export function DiscursiveSection({
   topicId,
   items,
@@ -98,36 +108,57 @@ export function DiscursiveSection({
         </div>
       </div>
 
-      {creating && <DiscursiveForm topicId={topicId} onDone={() => setCreating(false)} />}
+      <AnimatePresence initial={false}>
+        {creating && (
+          <motion.div
+            key="new-discursive-form"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <DiscursiveForm topicId={topicId} onDone={() => setCreating(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {items.map((item) =>
-        editingId === item.id ? (
-          <DiscursiveForm
-            key={item.id}
-            topicId={topicId}
-            item={item}
-            onDone={() => setEditingId(null)}
-          />
-        ) : (
-          <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-900 p-4">
-            <div className="font-medium">
-              <RichText text={item.question} />
-            </div>
-            <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditingId(item.id)} className={buttonSecondaryClass}>
-                Editar
-              </button>
-              <ConfirmSubmitButton
-                action={deleteDiscursive.bind(null, item.id, topicId)}
-                confirmMessage="Excluir pergunta discursiva?"
-                className={buttonDangerClass}
+      <motion.div className="space-y-3" variants={container} initial="hidden" animate="show">
+        <AnimatePresence initial={false}>
+          {items.map((item) =>
+            editingId === item.id ? (
+              <DiscursiveForm
+                key={item.id}
+                topicId={topicId}
+                item={item}
+                onDone={() => setEditingId(null)}
+              />
+            ) : (
+              <motion.div
+                key={item.id}
+                layout
+                variants={itemVariants}
+                exit={{ opacity: 0, height: 0 }}
+                className="rounded-lg border border-slate-800 bg-slate-900 p-4"
               >
-                Excluir
-              </ConfirmSubmitButton>
-            </div>
-          </div>
-        )
-      )}
+                <div className="font-medium">
+                  <RichText text={item.question} />
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => setEditingId(item.id)} className={buttonSecondaryClass}>
+                    Editar
+                  </button>
+                  <ConfirmSubmitButton
+                    action={deleteDiscursive.bind(null, item.id, topicId)}
+                    confirmMessage="Excluir pergunta discursiva?"
+                    className={buttonDangerClass}
+                  >
+                    Excluir
+                  </ConfirmSubmitButton>
+                </div>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

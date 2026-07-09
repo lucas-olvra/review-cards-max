@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { createCard, updateCard, deleteCard, type CardInput } from '@/lib/actions/cards';
 import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
@@ -91,6 +92,15 @@ function CardForm({
   );
 }
 
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0 },
+};
+
 export function CardsSection({ topicId, cards }: { topicId: string; cards: Card[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -106,31 +116,57 @@ export function CardsSection({ topicId, cards }: { topicId: string; cards: Card[
         )}
       </div>
 
-      {creating && <CardForm topicId={topicId} onDone={() => setCreating(false)} />}
+      <AnimatePresence initial={false}>
+        {creating && (
+          <motion.div
+            key="new-card-form"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <CardForm topicId={topicId} onDone={() => setCreating(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {cards.map((card) =>
-        editingId === card.id ? (
-          <CardForm key={card.id} topicId={topicId} card={card} onDone={() => setEditingId(null)} />
-        ) : (
-          <div key={card.id} className="rounded-lg border border-slate-800 bg-slate-900 p-4">
-            <div className="font-medium">
-              <RichText text={card.question} />
-            </div>
-            <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditingId(card.id)} className={buttonSecondaryClass}>
-                Editar
-              </button>
-              <ConfirmSubmitButton
-                action={deleteCard.bind(null, card.id, topicId)}
-                confirmMessage="Excluir cartão?"
-                className={buttonDangerClass}
+      <motion.div className="space-y-3" variants={container} initial="hidden" animate="show">
+        <AnimatePresence initial={false}>
+          {cards.map((card) =>
+            editingId === card.id ? (
+              <CardForm
+                key={card.id}
+                topicId={topicId}
+                card={card}
+                onDone={() => setEditingId(null)}
+              />
+            ) : (
+              <motion.div
+                key={card.id}
+                layout
+                variants={item}
+                exit={{ opacity: 0, height: 0 }}
+                className="rounded-lg border border-slate-800 bg-slate-900 p-4"
               >
-                Excluir
-              </ConfirmSubmitButton>
-            </div>
-          </div>
-        )
-      )}
+                <div className="font-medium">
+                  <RichText text={card.question} />
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => setEditingId(card.id)} className={buttonSecondaryClass}>
+                    Editar
+                  </button>
+                  <ConfirmSubmitButton
+                    action={deleteCard.bind(null, card.id, topicId)}
+                    confirmMessage="Excluir cartão?"
+                    className={buttonDangerClass}
+                  >
+                    Excluir
+                  </ConfirmSubmitButton>
+                </div>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
