@@ -1,6 +1,6 @@
 import { getTopicsWithCounts } from '@/lib/actions/topics';
 import { TopicsList } from '@/components/TopicsList';
-import { AnimatedEmoji } from '@/components/AnimatedEmoji';
+import { WelcomeCycleCarousel } from '@/components/WelcomeCycleCarousel';
 import { accent } from '@/lib/ui';
 
 export default async function TopicsPage() {
@@ -69,15 +69,7 @@ export default async function TopicsPage() {
       </div>
 
       {topics.length === 0 ? (
-        <div className="rcp-card" style={{ textAlign: 'center', marginBottom: 26 }}>
-          <h2 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 20, margin: '0 0 8px' }}>
-            <AnimatedEmoji>👋</AnimatedEmoji> Bem-vindo ao Review Cards Pro
-          </h2>
-          <p style={{ maxWidth: 480, margin: '0 auto', color: '#6B6862', fontSize: 15, lineHeight: 1.6 }}>
-            Cada <strong>tópico</strong> aqui é um ciclo completo de aprendizado: conceito → código
-            → onde usar → onde não usar → erros comuns → prática → revisão → explicar em voz alta.
-          </p>
-        </div>
+        <WelcomeCycleCarousel />
       ) : (
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0 0 18px' }}>
           <h2 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 20, letterSpacing: '-.01em', margin: 0 }}>

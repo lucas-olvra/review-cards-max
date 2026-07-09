@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { translateAuthError } from '@/lib/auth-errors';
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
@@ -10,7 +11,7 @@ export async function signIn(formData: FormData) {
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    redirect(`/login?error=${encodeURIComponent(translateAuthError(error.message))}`);
   }
   redirect('/topics');
 }
@@ -22,7 +23,7 @@ export async function signUp(formData: FormData) {
 
   const { error } = await supabase.auth.signUp({ email, password });
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    redirect(`/signup?error=${encodeURIComponent(translateAuthError(error.message))}`);
   }
   redirect(
     `/login?message=${encodeURIComponent(
