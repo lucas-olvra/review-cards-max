@@ -12,7 +12,7 @@ export function showModal(title, fields) {
             <h3 style='margin-top:0;margin-bottom:20px'>${title}</h3>`;
 
         fields.forEach((field, idx) => {
-            const isTextarea = ['Explicação','Pergunta','Analogia','Resumo','Alternativa','que é','existe','usar','comuns','Código'].some(k => field.label.includes(k));
+            const isTextarea = ['Explicação','Pergunta','Analogia','Resumo','Alternativa','que é','existe','usar','comuns','Código','exercício','Gabarito','modelo'].some(k => field.label.includes(k));
             const minHeight = field.label.includes('Alternativa') ? '44px' : '80px';
             const inputEl = isTextarea
                 ? `<textarea id='field${idx}' style='width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:14px;font-family:inherit;min-height:${minHeight};resize:vertical'>${field.value || ''}</textarea>`

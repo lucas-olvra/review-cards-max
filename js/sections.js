@@ -2,6 +2,7 @@ import { db, save } from './storage.js';
 import { escapeHtml, renderText } from './render.js';
 import { showModal } from './modal.js';
 import { editCard, deleteCard } from './cards.js';
+import { editDiscursive, deleteDiscursive } from './discursive.js';
 
 // ── Seções ──────────────────────────────────────────────────────
 const sectionFields = s => [
@@ -24,6 +25,9 @@ export function initAddSectionButton() {
                 useCases: result[3] || '',
                 antiPatterns: result[4] || '',
                 commonMistakes: result[5] || '',
+                exercise: { prompt: '', solution: '' },
+                discursive: [],
+                pitch: '',
                 cards: []
             });
             save();
@@ -69,6 +73,33 @@ export async function delSection(i) {
 }
 window.delSection = delSection;
 
+export async function editExercise(i) {
+    const s = db.sections[i];
+    const result = await showModal('Editar Prática', [
+        { label: 'Enunciado do exercício', value: s.exercise?.prompt || '' },
+        { label: 'Gabarito / solução', value: s.exercise?.solution || '' }
+    ]);
+    if (result) {
+        s.exercise = { prompt: result[0] || '', solution: result[1] || '' };
+        save();
+        openSection(i);
+    }
+}
+window.editExercise = editExercise;
+
+export async function editPitch(i) {
+    const s = db.sections[i];
+    const result = await showModal('Editar Resumo de 30 Segundos', [
+        { label: 'Resumo de 30 segundos — o que você diria em voz alta para explicar isso a alguém', value: s.pitch || '' }
+    ]);
+    if (result) {
+        s.pitch = result[0] || '';
+        save();
+        openSection(i);
+    }
+}
+window.editPitch = editPitch;
+
 // ── Abrir seção ─────────────────────────────────────────────────
 function panel(icon, title, editFn, bodyHtml, open) {
     return `<details class='summary-panel'${open ? ' open' : ''}>
@@ -100,6 +131,16 @@ export function openSection(i) {
     if (s.antiPatterns) panels += panel('🚫', 'Onde não usar', `editSection(${i})`, renderText(s.antiPatterns), false);
     if (s.commonMistakes) panels += panel('⚠️', 'Erros comuns', `editSection(${i})`, renderText(s.commonMistakes), false);
 
+    if (s.exercise?.prompt) {
+        const exerciseBody = renderText(s.exercise.prompt) +
+            (s.exercise.solution
+                ? `<details class='analogy-panel' style='margin-top:12px'><summary>✅ Ver gabarito</summary><div class='analogy-body'>${renderText(s.exercise.solution)}</div></details>`
+                : '');
+        panels += panel('🏋️', 'Prática', `editExercise(${i})`, exerciseBody, false);
+    } else {
+        panels += `<div class='row' style='margin-bottom:14px'><button onclick='editExercise(${i})'>+ Exercício de prática</button></div>`;
+    }
+
     let html = `<button onclick='home()'>← Voltar</button>
 <h2>${escapeHtml(s.name)}</h2>
 ${panels}
@@ -114,6 +155,29 @@ ${panels}
 </div></div>`;
     });
 
+    html += `<h3 style='margin-top:24px'>💬 Perguntas Discursivas</h3>
+<div class='row' style='margin-bottom:10px'>
+<button onclick='newDiscursive(${i})'>+ Pergunta Discursiva</button>
+${s.discursive.length ? `<button onclick='startDiscursiveReview(${i})'>Revisar Discursivas</button>` : ''}
+</div>`;
+
+    s.discursive.forEach((q, idx) => {
+        html += `<div class='card'>
+<div class='question-render'>${renderText(q.question)}</div>
+<div class='row' style='margin-top:10px'>
+<button class='edit-disc-btn' data-si='${i}' data-qi='${idx}'>Editar</button>
+<button class='delete-disc-btn' data-si='${i}' data-qi='${idx}'>Excluir</button>
+</div></div>`;
+    });
+
+    if (s.pitch) {
+        const pitchBody = renderText(s.pitch) +
+            `<div class='row' style='margin-top:12px'><button onclick='startPitchPractice(${i})'>🎤 Praticar (30s)</button></div>`;
+        html += panel('🎤', 'Explicar em 30 segundos', `editPitch(${i})`, pitchBody, false);
+    } else {
+        html += `<div class='row' style='margin-top:14px'><button onclick='editPitch(${i})'>+ Resumo de 30 segundos</button></div>`;
+    }
+
     const app = document.getElementById('app');
     app.innerHTML = html;
 
@@ -126,6 +190,16 @@ ${panels}
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             deleteCard(parseInt(this.dataset.si), parseInt(this.dataset.ci));
+        }));
+    document.querySelectorAll('.edit-disc-btn').forEach(btn =>
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            editDiscursive(parseInt(this.dataset.si), parseInt(this.dataset.qi));
+        }));
+    document.querySelectorAll('.delete-disc-btn').forEach(btn =>
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            deleteDiscursive(parseInt(this.dataset.si), parseInt(this.dataset.qi));
         }));
 }
 window.openSection = openSection;
