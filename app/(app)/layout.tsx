@@ -11,6 +11,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Link>
         <nav className="flex items-center gap-3">
           <Link
+            href="/settings/tokens"
+            className="rounded-md px-3 py-1.5 text-sm text-slate-300 transition-colors hover:bg-slate-800"
+          >
+            Tokens
+          </Link>
+          <Link
             href="/import"
             className="rounded-md px-3 py-1.5 text-sm text-slate-300 transition-colors hover:bg-slate-800"
           >

@@ -1,0 +1,65 @@
+# Review Cards MCP Server
+
+Servidor MCP local que expõe o ciclo de aprendizado do [Review Cards Pro](../README.md)
+como *tools* para um cliente de IA (Claude Desktop, Claude Code, etc). Permite pedir para a
+IA criar um tópico de estudo inteiro — conceito, código, onde usar, onde não usar, erros
+comuns, exercício, cartões e perguntas discursivas — numa única chamada, em vez de preencher
+cada campo manualmente pela interface.
+
+## 1. Gerar um token de acesso
+
+Na aplicação, logado na sua conta: **Tokens** (menu superior) → **+ Novo Token** → copie o
+valor mostrado (só aparece uma vez).
+
+## 2. Instalar e buildar
+
+```bash
+cd mcp-server
+npm install
+npm run build
+```
+
+Isso gera `dist/index.js`.
+
+## 3. Configurar no cliente de IA
+
+No arquivo de configuração de MCP do seu cliente (ex: `claude_desktop_config.json` do Claude
+Desktop, ou o equivalente no Claude Code), adicione:
+
+```json
+{
+  "mcpServers": {
+    "review-cards": {
+      "command": "node",
+      "args": ["/caminho/completo/para/mcp-server/dist/index.js"],
+      "env": {
+        "REVIEW_CARDS_API_URL": "https://sua-app.vercel.app",
+        "REVIEW_CARDS_API_TOKEN": "rcp_..."
+      }
+    }
+  }
+}
+```
+
+- `REVIEW_CARDS_API_URL`: a URL da sua aplicação implantada (ou `http://localhost:3000`
+  durante desenvolvimento local).
+- `REVIEW_CARDS_API_TOKEN`: o token gerado no passo 1.
+
+Reinicie o cliente de IA depois de salvar a configuração.
+
+## Tools disponíveis
+
+| Tool | O que faz |
+| --- | --- |
+| `create_topic` | Cria um tópico completo (todos os campos + cartões + discursivas) numa chamada |
+| `list_topics` | Lista os tópicos existentes |
+| `get_topic` | Detalhes completos de um tópico |
+| `update_topic` | Atualiza campos de um tópico existente |
+| `add_card` | Adiciona um cartão de múltipla escolha a um tópico |
+| `add_discursive_question` | Adiciona uma pergunta discursiva a um tópico |
+| `delete_topic` | Exclui um tópico |
+
+## Revogando acesso
+
+Se o token vazar ou você não precisar mais dessa integração, revogue em **Tokens** na
+aplicação — o acesso é bloqueado imediatamente.
