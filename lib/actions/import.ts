@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 interface LegacySection {
   name: string;
   concept?: { what?: string; why?: string };
+  summary?: string; // formato pré-Fase-1, anterior a "concept"
   code?: string;
   useCases?: string;
   antiPatterns?: string;
@@ -50,7 +51,7 @@ export async function importLegacyJson(raw: string): Promise<{ imported: number 
       .insert({
         user_id: user.id,
         name: section.name,
-        concept_what: section.concept?.what ?? '',
+        concept_what: section.concept?.what ?? section.summary ?? '',
         concept_why: section.concept?.why ?? '',
         code: section.code ?? '',
         use_cases: section.useCases ?? '',

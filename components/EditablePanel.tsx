@@ -37,7 +37,7 @@ export function EditablePanel({
   }
 
   return (
-    <details className="mb-3 rounded-lg border border-slate-800 bg-slate-900" open={defaultOpen}>
+    <details className="mb-3 rounded-lg border border-slate-800 bg-slate-900" open={defaultOpen || editing}>
       <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 font-medium">
         <span>
           {icon} {title}
