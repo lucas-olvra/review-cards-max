@@ -19,7 +19,7 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleString('pt-BR');
 }
 
-export function TokensManager({ tokens }: { tokens: ApiTokenSummary[] }) {
+export function TokensManager({ tokens, mcpUrl }: { tokens: ApiTokenSummary[]; mcpUrl: string }) {
   const [name, setName] = useState('');
   const [freshToken, setFreshToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,10 +70,33 @@ export function TokensManager({ tokens }: { tokens: ApiTokenSummary[] }) {
               </code>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => navigator.clipboard.writeText(freshToken)} className={buttonSecondaryClass}>
-                  Copiar
+                  Copiar token
                 </button>
                 <button onClick={() => setFreshToken(null)} className={buttonPrimaryClass}>
                   Entendi, já copiei
+                </button>
+              </div>
+
+              <div style={{ borderTop: '1px solid rgba(0,0,0,.08)', margin: '4px 0 0', paddingTop: 12 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#92620C', margin: '0 0 8px' }}>
+                  Já com o token — comando pronto pro Claude Code:
+                </p>
+                <code
+                  className="rcp-font-code"
+                  style={{ display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-all', borderRadius: 10, background: '#161616', padding: 12, fontSize: 12, color: '#7FE3B4' }}
+                >
+                  {`claude mcp add --transport http review-cards ${mcpUrl} --header "Authorization: Bearer ${freshToken}"`}
+                </code>
+                <button
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      `claude mcp add --transport http review-cards ${mcpUrl} --header "Authorization: Bearer ${freshToken}"`
+                    )
+                  }
+                  className={buttonSecondaryClass}
+                  style={{ marginTop: 8 }}
+                >
+                  Copiar comando
                 </button>
               </div>
             </motion.div>
