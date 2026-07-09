@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { createCard, updateCard, deleteCard, type CardInput } from '@/lib/actions/cards';
@@ -15,6 +16,9 @@ import {
 } from '@/lib/ui';
 import type { Card } from '@/lib/types';
 
+const CARD_COLOR = '#0891A5';
+const CARD_TINT = '#E0F7FB';
+
 function CardForm({
   topicId,
   card,
@@ -28,7 +32,8 @@ function CardForm({
 
   return (
     <form
-      className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+      className="rcp-card"
+      style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
       action={(formData) => {
         const input: CardInput = {
           question: (formData.get('question') as string) ?? '',
@@ -80,7 +85,7 @@ function CardForm({
         <label className={labelClass}>Analogia (opcional)</label>
         <textarea name="analogy" defaultValue={card?.analogy} className={textareaClass} />
       </div>
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: 8 }}>
         <button type="submit" disabled={isPending} className={buttonPrimaryClass}>
           {isPending ? 'Salvando...' : 'Salvar'}
         </button>
@@ -106,14 +111,32 @@ export function CardsSection({ topicId, cards }: { topicId: string; cards: Card[
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Cartões</h3>
-        {!creating && (
-          <button onClick={() => setCreating(true)} className={buttonSecondaryClass}>
-            + Cartão
-          </button>
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <span style={{ width: 30, height: 30, borderRadius: 9, display: 'grid', placeItems: 'center', background: CARD_TINT }}>
+            <i className="ph-fill ph-cards" style={{ color: CARD_COLOR, fontSize: 16 }} />
+          </span>
+          <h3 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 17, margin: 0 }}>
+            Cartões <span style={{ color: '#A29E96', fontWeight: 500 }}>· {cards.length}</span>
+          </h3>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {!creating && (
+            <button type="button" onClick={() => setCreating(true)} className={buttonSecondaryClass}>
+              <i className="ph-bold ph-plus" style={{ fontSize: 12 }} /> Cartão
+            </button>
+          )}
+          {cards.length > 0 && (
+            <Link
+              href={`/topics/${topicId}/review`}
+              className="rcp-btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: CARD_COLOR, boxShadow: `0 6px 16px -7px ${CARD_COLOR}b3` }}
+            >
+              <i className="ph-fill ph-play" style={{ fontSize: 12 }} /> Revisar cartões
+            </Link>
+          )}
+        </div>
       </div>
 
       <AnimatePresence initial={false}>
@@ -129,39 +152,48 @@ export function CardsSection({ topicId, cards }: { topicId: string; cards: Card[
         )}
       </AnimatePresence>
 
-      <motion.div className="space-y-3" variants={container} initial="hidden" animate="show">
+      <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} variants={container} initial="hidden" animate="show">
         <AnimatePresence initial={false}>
-          {cards.map((card) =>
+          {cards.map((card, i) =>
             editingId === card.id ? (
-              <CardForm
-                key={card.id}
-                topicId={topicId}
-                card={card}
-                onDone={() => setEditingId(null)}
-              />
+              <CardForm key={card.id} topicId={topicId} card={card} onDone={() => setEditingId(null)} />
             ) : (
               <motion.div
                 key={card.id}
                 layout
                 variants={item}
                 exit={{ opacity: 0, height: 0 }}
-                className="rounded-lg border border-slate-800 bg-slate-900 p-4"
+                className="rcp-list-row"
+                style={{ display: 'flex', alignItems: 'center', gap: 12 }}
               >
-                <div className="font-medium">
+                <span
+                  style={{
+                    width: 26,
+                    height: 26,
+                    flex: 'none',
+                    borderRadius: 8,
+                    background: CARD_TINT,
+                    color: CARD_COLOR,
+                    display: 'grid',
+                    placeItems: 'center',
+                    font: '600 13px var(--font-display)',
+                  }}
+                >
+                  {i + 1}
+                </span>
+                <div style={{ flex: 1, fontSize: 15, color: '#35322D', lineHeight: 1.4 }}>
                   <RichText text={card.question} />
                 </div>
-                <div className="mt-3 flex gap-2">
-                  <button onClick={() => setEditingId(card.id)} className={buttonSecondaryClass}>
-                    Editar
-                  </button>
-                  <ConfirmSubmitButton
-                    action={deleteCard.bind(null, card.id, topicId)}
-                    confirmMessage="Excluir cartão?"
-                    className={buttonDangerClass}
-                  >
-                    Excluir
-                  </ConfirmSubmitButton>
-                </div>
+                <button type="button" onClick={() => setEditingId(card.id)} className="rcp-icon-btn">
+                  <i className="ph ph-pencil-simple" style={{ fontSize: 16 }} />
+                </button>
+                <ConfirmSubmitButton
+                  action={deleteCard.bind(null, card.id, topicId)}
+                  confirmMessage="Excluir cartão?"
+                  className={buttonDangerClass}
+                >
+                  Excluir
+                </ConfirmSubmitButton>
               </motion.div>
             )
           )}
