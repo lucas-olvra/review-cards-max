@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { getTokens } from '@/lib/actions/tokens';
 import { TokensManager } from '@/components/TokensManager';
 import { accent } from '@/lib/ui';
@@ -14,6 +15,10 @@ const MCP_TOOLS: { tool: string; does: string }[] = [
 
 export default async function TokensPage() {
   const tokens = await getTokens();
+  const h = await headers();
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000';
+  const protocol = h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
+  const mcpUrl = `${protocol}://${host}/api/mcp`;
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '30px 26px 80px' }}>
@@ -52,10 +57,29 @@ export default async function TokensPage() {
           cartões e perguntas discursivas.
         </p>
 
+        <p
+          style={{
+            fontSize: 13,
+            color: '#92620C',
+            background: '#FDF3E3',
+            border: '1.5px solid #F5D9A8',
+            borderRadius: 10,
+            padding: '10px 12px',
+            margin: '0 0 18px',
+            lineHeight: 1.5,
+          }}
+        >
+          <i className="ph-bold ph-info" style={{ marginRight: 4 }} /> Isso <strong>não</strong> é
+          algo que você cola numa mensagem de chat — é uma conexão que você configura nas
+          preferências do seu cliente de IA (Claude Code, Claude Desktop, etc), igual a um
+          &quot;Connector&quot;. O token identifica sua conta; ele não funciona sozinho sem essa
+          configuração.
+        </p>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 18 }}>
           {[
-            { n: '1', title: 'Gere um token aqui embaixo', text: 'Dê um nome pra ele (ex: "Claude Desktop") e copie o valor — ele só aparece uma vez.' },
-            { n: '2', title: 'Configure o servidor MCP no seu cliente de IA', text: 'Aponte o cliente (Claude Desktop, Claude Code, etc) para o servidor do Review Cards com esse token — instruções completas em mcp-server/README.md.' },
+            { n: '1', title: 'Gere um token aqui embaixo', text: 'Dê um nome pra ele (ex: "Claude Code") e copie o valor — ele só aparece uma vez.' },
+            { n: '2', title: 'Adicione o Review Cards como servidor MCP no seu cliente', text: 'Cole a URL do servidor + o token nas configurações do cliente — comandos prontos logo abaixo.' },
             { n: '3', title: 'Peça pra IA criar seus tópicos', text: 'Ex: "crie um tópico sobre closures em JavaScript, com 5 cartões de revisão". Pronto — aparece direto na sua lista de tópicos.' },
           ].map((step) => (
             <div key={step.n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -81,7 +105,81 @@ export default async function TokensPage() {
           ))}
         </div>
 
+        <h3 style={{ font: '600 13.5px var(--font-body)', margin: '0 0 10px' }}>Como conectar</h3>
+
+        <div style={{ marginBottom: 10 }}>
+          <p style={{ fontSize: 13.5, fontWeight: 600, margin: '0 0 6px' }}>Claude Code (recomendado — 1 comando)</p>
+          <code
+            className="rcp-font-code"
+            style={{
+              display: 'block',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              background: '#161616',
+              color: '#7FE3B4',
+              borderRadius: 10,
+              padding: 12,
+              fontSize: 12.5,
+            }}
+          >
+            {`claude mcp add --transport http review-cards ${mcpUrl} --header "Authorization: Bearer SEU_TOKEN"`}
+          </code>
+        </div>
+
+        <details style={{ marginBottom: 8 }}>
+          <summary style={{ cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: accent }}>
+            Claude Desktop
+          </summary>
+          <p style={{ fontSize: 13, color: '#6B6862', margin: '10px 0 8px', lineHeight: 1.55 }}>
+            O Claude Desktop ainda não conecta em servidores HTTP remotos com token direto no
+            arquivo de config — o caminho que funciona hoje é a ponte{' '}
+            <code className="rcp-font-code" style={{ fontSize: 12 }}>mcp-remote</code>. Adicione
+            isto ao <code className="rcp-font-code" style={{ fontSize: 12 }}>claude_desktop_config.json</code>:
+          </p>
+          <code
+            className="rcp-font-code"
+            style={{
+              display: 'block',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              background: '#161616',
+              color: '#7FE3B4',
+              borderRadius: 10,
+              padding: 12,
+              fontSize: 12.5,
+            }}
+          >
+            {`{
+  "mcpServers": {
+    "review-cards": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote", "${mcpUrl}",
+        "--transport", "http-only",
+        "--header", "Authorization: Bearer SEU_TOKEN"
+      ]
+    }
+  }
+}`}
+          </code>
+          <p style={{ fontSize: 12.5, color: '#9A968E', margin: '8px 0 0' }}>
+            Exige Node.js instalado (o <code className="rcp-font-code" style={{ fontSize: 11.5 }}>npx</code> baixa o mcp-remote na hora). Reinicie o Claude Desktop depois de salvar.
+          </p>
+        </details>
+
         <details>
+          <summary style={{ cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: accent }}>
+            Rodar localmente, sem depender do servidor remoto (avançado)
+          </summary>
+          <p style={{ fontSize: 13, color: '#6B6862', margin: '10px 0 0', lineHeight: 1.55 }}>
+            Também existe uma versão do servidor MCP que roda no seu computador via stdio, em vez
+            de se conectar remotamente — instruções completas em{' '}
+            <code className="rcp-font-code" style={{ fontSize: 12 }}>mcp-server/README.md</code> no
+            repositório do projeto.
+          </p>
+        </details>
+
+        <details style={{ marginTop: 8 }}>
           <summary style={{ cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: accent }}>
             Ver as ações que a IA pode fazer
           </summary>
@@ -98,7 +196,7 @@ export default async function TokensPage() {
         </details>
       </div>
 
-      <TokensManager tokens={tokens} />
+      <TokensManager tokens={tokens} mcpUrl={mcpUrl} />
     </div>
   );
 }

@@ -6,6 +6,12 @@ IA criar um tópico de estudo inteiro — conceito, código, onde usar, onde nã
 comuns, exercício, cartões e perguntas discursivas — numa única chamada, em vez de preencher
 cada campo manualmente pela interface.
 
+> **Não quer instalar nada localmente?** A própria aplicação expõe um servidor MCP remoto em
+> `/api/mcp` (transporte HTTP, sem precisar clonar/buildar este pacote) — veja a seção "Como
+> conectar" na página **Tokens & MCP** da aplicação (`/settings/tokens`) para o comando pronto
+> do Claude Code e a config do Claude Desktop via `mcp-remote`. O guia abaixo é para quem
+> prefere rodar o servidor localmente via stdio.
+
 ## 1. Gerar um token de acesso
 
 Na aplicação, logado na sua conta: **Tokens** (menu superior) → **+ Novo Token** → copie o
