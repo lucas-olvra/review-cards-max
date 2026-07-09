@@ -37,7 +37,7 @@ export default async function SignupPage({
 
         <p className="mt-4 text-sm text-slate-400">
           Já tem conta?{' '}
-          <a href="/login" className="text-blue-400 hover:underline">
+          <a href="/login" className="text-indigo-400 hover:underline">
             Entrar
           </a>
         </p>

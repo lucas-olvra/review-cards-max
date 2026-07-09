@@ -39,7 +39,7 @@ export default async function LoginPage({
 
         <p className="mt-4 text-sm text-slate-400">
           Não tem conta?{' '}
-          <a href="/signup" className="text-blue-400 hover:underline">
+          <a href="/signup" className="text-indigo-400 hover:underline">
             Criar conta
           </a>
         </p>

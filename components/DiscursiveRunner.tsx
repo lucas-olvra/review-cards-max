@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { DiscursiveQuestion } from '@/lib/types';
@@ -23,7 +24,11 @@ export function DiscursiveRunner({
 
   if (idx >= items.length) {
     return (
-      <div className={cardClass}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cardClass}
+      >
         <h2 className="mb-2 text-xl font-bold">Resultado</h2>
         <p className="mb-4 text-slate-300">
           Acertos: {hits}/{items.length}
@@ -31,7 +36,7 @@ export function DiscursiveRunner({
         <Link href={`/topics/${topicId}`} className={buttonPrimaryClass}>
           Voltar ao tópico
         </Link>
-      </div>
+      </motion.div>
     );
   }
 
@@ -47,13 +52,23 @@ export function DiscursiveRunner({
   return (
     <div>
       <div className="mb-3 h-2 overflow-hidden rounded-full bg-slate-800">
-        <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+        <motion.div
+          className="h-full bg-emerald-500"
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        />
       </div>
       <p className="mb-4 text-sm text-slate-400">
         Pergunta {idx + 1} de {items.length}
       </p>
 
-      <div className={cardClass}>
+      <motion.div
+        key={idx}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className={cardClass}
+      >
         <h3 className="mb-3 text-lg font-semibold">
           <RichText text={item.question} />
         </h3>
@@ -66,7 +81,12 @@ export function DiscursiveRunner({
             </button>
           </>
         ) : (
-          <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
             <div className="rounded-lg bg-slate-800/60 p-4 text-sm">
               {item.model_answer ? (
                 <RichText text={item.model_answer} />
@@ -82,9 +102,9 @@ export function DiscursiveRunner({
                 ✗ Preciso revisar
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
