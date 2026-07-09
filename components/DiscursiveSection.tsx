@@ -20,6 +20,9 @@ import {
 } from '@/lib/ui';
 import type { DiscursiveQuestion } from '@/lib/types';
 
+const DISC_COLOR = '#4F46E5';
+const DISC_TINT = '#E9E8FF';
+
 function DiscursiveForm({
   topicId,
   item,
@@ -33,7 +36,8 @@ function DiscursiveForm({
 
   return (
     <form
-      className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+      className="rcp-card"
+      style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
       action={(formData) => {
         const input: DiscursiveInput = {
           question: (formData.get('question') as string) ?? '',
@@ -57,7 +61,7 @@ function DiscursiveForm({
         <label className={labelClass}>Resposta modelo (o que uma boa resposta deveria cobrir)</label>
         <textarea name="model_answer" defaultValue={item?.model_answer} className={textareaClass} />
       </div>
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: 8 }}>
         <button type="submit" disabled={isPending} className={buttonPrimaryClass}>
           {isPending ? 'Salvando...' : 'Salvar'}
         </button>
@@ -89,21 +93,30 @@ export function DiscursiveSection({
   const [creating, setCreating] = useState(false);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          💬 Perguntas Discursivas
-        </h3>
-        <div className="flex gap-2">
-          {items.length > 0 && (
-            <Link href={`/topics/${topicId}/review-discursive`} className={buttonSecondaryClass}>
-              Revisar Discursivas
-            </Link>
-          )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <span style={{ width: 30, height: 30, borderRadius: 9, display: 'grid', placeItems: 'center', background: DISC_TINT }}>
+            <i className="ph-fill ph-chat-circle-dots" style={{ color: DISC_COLOR, fontSize: 16 }} />
+          </span>
+          <h3 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 17, margin: 0 }}>
+            Discursivas <span style={{ color: '#A29E96', fontWeight: 500 }}>· {items.length}</span>
+          </h3>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
           {!creating && (
-            <button onClick={() => setCreating(true)} className={buttonSecondaryClass}>
-              + Pergunta Discursiva
+            <button type="button" onClick={() => setCreating(true)} className={buttonSecondaryClass}>
+              <i className="ph-bold ph-plus" style={{ fontSize: 12 }} /> Discursiva
             </button>
+          )}
+          {items.length > 0 && (
+            <Link
+              href={`/topics/${topicId}/review-discursive`}
+              className="rcp-btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: DISC_COLOR, boxShadow: `0 6px 16px -7px ${DISC_COLOR}b3` }}
+            >
+              <i className="ph-fill ph-play" style={{ fontSize: 12 }} /> Revisar discursivas
+            </Link>
           )}
         </div>
       </div>
@@ -121,39 +134,34 @@ export function DiscursiveSection({
         )}
       </AnimatePresence>
 
-      <motion.div className="space-y-3" variants={container} initial="hidden" animate="show">
+      <motion.div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} variants={container} initial="hidden" animate="show">
         <AnimatePresence initial={false}>
           {items.map((item) =>
             editingId === item.id ? (
-              <DiscursiveForm
-                key={item.id}
-                topicId={topicId}
-                item={item}
-                onDone={() => setEditingId(null)}
-              />
+              <DiscursiveForm key={item.id} topicId={topicId} item={item} onDone={() => setEditingId(null)} />
             ) : (
               <motion.div
                 key={item.id}
                 layout
                 variants={itemVariants}
                 exit={{ opacity: 0, height: 0 }}
-                className="rounded-lg border border-slate-800 bg-slate-900 p-4"
+                className="rcp-list-row"
+                style={{ display: 'flex', alignItems: 'center', gap: 12 }}
               >
-                <div className="font-medium">
+                <i className="ph ph-quotes" style={{ color: DISC_COLOR, fontSize: 18 }} />
+                <div style={{ flex: 1, fontSize: 15, color: '#35322D', lineHeight: 1.4 }}>
                   <RichText text={item.question} />
                 </div>
-                <div className="mt-3 flex gap-2">
-                  <button onClick={() => setEditingId(item.id)} className={buttonSecondaryClass}>
-                    Editar
-                  </button>
-                  <ConfirmSubmitButton
-                    action={deleteDiscursive.bind(null, item.id, topicId)}
-                    confirmMessage="Excluir pergunta discursiva?"
-                    className={buttonDangerClass}
-                  >
-                    Excluir
-                  </ConfirmSubmitButton>
-                </div>
+                <button type="button" onClick={() => setEditingId(item.id)} className="rcp-icon-btn">
+                  <i className="ph ph-pencil-simple" style={{ fontSize: 16 }} />
+                </button>
+                <ConfirmSubmitButton
+                  action={deleteDiscursive.bind(null, item.id, topicId)}
+                  confirmMessage="Excluir pergunta discursiva?"
+                  className={buttonDangerClass}
+                >
+                  Excluir
+                </ConfirmSubmitButton>
               </motion.div>
             )
           )}

@@ -41,10 +41,12 @@ export function TokensManager({ tokens }: { tokens: ApiTokenSummary[] }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className={cardClass}>
-        <h2 className="mb-1 text-lg font-semibold">+ Novo Token</h2>
-        <p className="mb-4 text-sm text-slate-400">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className={cardClass} style={{ borderRadius: 22, padding: 28 }}>
+        <h2 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 18, margin: '0 0 6px' }}>
+          + Novo token
+        </h2>
+        <p style={{ fontSize: 14, color: '#6B6862', margin: '0 0 16px' }}>
           Dá um nome pra identificar onde esse token vai ser usado (ex: &quot;Claude Desktop —
           Notebook&quot;).
         </p>
@@ -55,19 +57,19 @@ export function TokensManager({ tokens }: { tokens: ApiTokenSummary[] }) {
               key="fresh-token"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-3 rounded-lg border border-amber-800 bg-amber-950/40 p-4"
+              style={{ display: 'flex', flexDirection: 'column', gap: 12, borderRadius: 14, border: '1.5px solid #F5D9A8', background: '#FDF3E3', padding: 16 }}
             >
-              <p className="text-sm font-semibold text-amber-300">
+              <p style={{ fontSize: 14, fontWeight: 600, color: '#92620C' }}>
                 Copie este token agora — ele não será mostrado de novo.
               </p>
-              <code className="block break-all rounded-md bg-slate-950 p-3 text-sm text-emerald-300">
+              <code
+                className="rcp-font-code"
+                style={{ display: 'block', wordBreak: 'break-all', borderRadius: 10, background: '#161616', padding: 12, fontSize: 13, color: '#7FE3B4' }}
+              >
                 {freshToken}
               </code>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigator.clipboard.writeText(freshToken)}
-                  className={buttonSecondaryClass}
-                >
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => navigator.clipboard.writeText(freshToken)} className={buttonSecondaryClass}>
                   Copiar
                 </button>
                 <button onClick={() => setFreshToken(null)} className={buttonPrimaryClass}>
@@ -77,8 +79,8 @@ export function TokensManager({ tokens }: { tokens: ApiTokenSummary[] }) {
             </motion.div>
           ) : (
             <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="flex gap-2">
-                <div className="flex-1">
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
                   <label className={labelClass}>Nome do token</label>
                   <input
                     value={name}
@@ -87,33 +89,26 @@ export function TokensManager({ tokens }: { tokens: ApiTokenSummary[] }) {
                     placeholder="ex: Claude Desktop — Notebook"
                   />
                 </div>
-                <button
-                  onClick={handleCreate}
-                  disabled={isPending || !name.trim()}
-                  className={`self-end ${buttonPrimaryClass}`}
-                >
+                <button onClick={handleCreate} disabled={isPending || !name.trim()} className={buttonPrimaryClass}>
                   {isPending ? 'Gerando...' : 'Gerar token'}
                 </button>
               </div>
-              {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+              {error && <p style={{ marginTop: 8, fontSize: 14, color: '#B42318' }}>{error}</p>}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h3 style={{ font: '600 13px var(--font-body)', textTransform: 'uppercase', letterSpacing: '.03em', color: '#86827A', margin: 0 }}>
           Tokens ativos
         </h3>
-        {!tokens.length && <p className="text-sm text-slate-500">Nenhum token criado ainda.</p>}
+        {!tokens.length && <p style={{ fontSize: 14, color: '#9A968E' }}>Nenhum token criado ainda.</p>}
         {tokens.map((token) => (
-          <div
-            key={token.id}
-            className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-4"
-          >
+          <div key={token.id} className="rcp-list-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <p className="font-medium">{token.name}</p>
-              <p className="text-xs text-slate-500">
+              <p style={{ fontWeight: 600, margin: 0 }}>{token.name}</p>
+              <p style={{ fontSize: 12.5, color: '#9A968E', margin: '2px 0 0' }}>
                 {token.token_prefix}… · criado em {formatDate(token.created_at)} · último uso:{' '}
                 {formatDate(token.last_used_at)}
               </p>

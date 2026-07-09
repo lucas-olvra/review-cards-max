@@ -9,11 +9,13 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   if (!topic) notFound();
 
   return (
-    <div>
-      <Link href={`/topics/${id}`} className="mb-4 inline-block text-sm text-slate-400 hover:text-slate-200">
-        ← Sair
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '26px 26px 90px' }}>
+      <Link
+        href={`/topics/${id}`}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 500, color: '#86827A', marginBottom: 22 }}
+      >
+        <i className="ph ph-x" /> Sair da revisão
       </Link>
-      <h2 className="mb-4 text-xl font-bold">Revisão</h2>
       <QuizRunner topicId={id} cards={topic.cards} conceptWhat={topic.concept_what} />
     </div>
   );

@@ -1,107 +1,162 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getTopic, updateTopicPanel } from '@/lib/actions/topics';
+import { getTopic, getTopics, updateTopicPanel, deleteTopic } from '@/lib/actions/topics';
 import { EditablePanel } from '@/components/EditablePanel';
 import { CardsSection } from '@/components/CardsSection';
 import { DiscursiveSection } from '@/components/DiscursiveSection';
 import { TopicHeader } from '@/components/TopicHeader';
-import { buttonSecondaryClass } from '@/lib/ui';
+import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
+import { buttonDangerClass } from '@/lib/ui';
+import { SIMPLE_STAGE_DEFS, PRACTICE_STAGE_DEF } from '@/lib/stages';
+import { paletteFor } from '@/lib/palette';
 
 export default async function TopicPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const topic = await getTopic(id);
+  const [topic, topics] = await Promise.all([getTopic(id), getTopics()]);
   if (!topic) notFound();
 
+  const idx = topics.findIndex((t) => t.id === id);
+  const palette = paletteFor(idx < 0 ? 0 : idx);
+
   return (
-    <div>
-      <Link href="/topics" className="mb-4 inline-block text-sm text-slate-400 hover:text-slate-200">
-        ← Voltar
+    <div style={{ maxWidth: 840, margin: '0 auto', padding: '26px 26px 90px' }}>
+      <Link
+        href="/topics"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 500, color: '#86827A', marginBottom: 20 }}
+      >
+        <i className="ph ph-arrow-left" /> Todos os tópicos
       </Link>
 
-      <TopicHeader topicId={topic.id} name={topic.name} />
+      <TopicHeader topicId={topic.id} name={topic.name} icon={palette.icon} color={palette.bg} />
 
-      <EditablePanel
-        icon="🧠"
-        title="O que é / Por que existe"
-        fields={[
-          { name: 'concept_what', label: 'O que é', value: topic.concept_what },
-          { name: 'concept_why', label: 'Por que existe', value: topic.concept_why },
-        ]}
-        action={updateTopicPanel.bind(null, topic.id, ['concept_what', 'concept_why'])}
-        defaultOpen
-      />
+      <div
+        className="rcp-scroll"
+        style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '14px 2px 16px', marginBottom: 8 }}
+      >
+        {[...SIMPLE_STAGE_DEFS, PRACTICE_STAGE_DEF].map((s) => (
+          <div
+            key={s.key}
+            style={{
+              flex: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 13px 8px 8px',
+              borderRadius: 999,
+              background: s.tint,
+            }}
+          >
+            <span style={{ width: 26, height: 26, borderRadius: 8, display: 'grid', placeItems: 'center', background: s.color }}>
+              <i className={s.icon} style={{ color: '#fff', fontSize: 13 }} />
+            </span>
+            <span style={{ font: '600 12.5px var(--font-body)', color: s.color, whiteSpace: 'nowrap' }}>{s.short}</span>
+          </div>
+        ))}
+      </div>
 
-      <EditablePanel
-        icon="💻"
-        title="Código"
-        fields={[{ name: 'code', label: 'Código de exemplo (use ``` para destacar como bloco)', value: topic.code }]}
-        action={updateTopicPanel.bind(null, topic.id, ['code'])}
-        emptyLabel="+ Código de exemplo"
-      />
+      <div style={{ display: 'flex', flexDirection: 'column', marginTop: 14 }}>
+        {SIMPLE_STAGE_DEFS.map((s) => (
+          <EditablePanel
+            key={s.key}
+            icon={s.icon}
+            title={s.title}
+            color={s.color}
+            tint={s.tint}
+            isCode={s.isCode}
+            fields={[{ name: s.key, label: s.title, value: topic[s.key] }]}
+            action={updateTopicPanel.bind(null, topic.id, [s.key])}
+            emptyLabel={`+ ${s.title}`}
+          />
+        ))}
 
-      <EditablePanel
-        icon="✅"
-        title="Onde usar"
-        fields={[{ name: 'use_cases', label: 'Onde usar — casos reais', value: topic.use_cases }]}
-        action={updateTopicPanel.bind(null, topic.id, ['use_cases'])}
-      />
+        <EditablePanel
+          icon={PRACTICE_STAGE_DEF.icon}
+          title={PRACTICE_STAGE_DEF.title}
+          color={PRACTICE_STAGE_DEF.color}
+          tint={PRACTICE_STAGE_DEF.tint}
+          fields={[
+            { name: 'exercise_prompt', label: 'Enunciado do exercício', value: topic.exercise_prompt },
+            { name: 'exercise_solution', label: 'Gabarito / solução', value: topic.exercise_solution },
+          ]}
+          action={updateTopicPanel.bind(null, topic.id, ['exercise_prompt', 'exercise_solution'])}
+          emptyLabel="+ Prática"
+        />
+      </div>
 
-      <EditablePanel
-        icon="🚫"
-        title="Onde não usar"
-        fields={[
-          { name: 'anti_patterns', label: 'Onde não usar — limitações/trade-offs', value: topic.anti_patterns },
-        ]}
-        action={updateTopicPanel.bind(null, topic.id, ['anti_patterns'])}
-      />
+      <div style={{ margin: '26px 0 0' }}>
+        <CardsSection topicId={topic.id} cards={topic.cards} />
+      </div>
 
-      <EditablePanel
-        icon="⚠️"
-        title="Erros comuns"
-        fields={[{ name: 'common_mistakes', label: 'Erros comuns', value: topic.common_mistakes }]}
-        action={updateTopicPanel.bind(null, topic.id, ['common_mistakes'])}
-      />
+      <div style={{ margin: '26px 0 0' }}>
+        <DiscursiveSection topicId={topic.id} items={topic.discursive_questions} />
+      </div>
 
-      <EditablePanel
-        icon="🏋️"
-        title="Prática"
-        fields={[
-          { name: 'exercise_prompt', label: 'Enunciado do exercício', value: topic.exercise_prompt },
-          { name: 'exercise_solution', label: 'Gabarito / solução', value: topic.exercise_solution },
-        ]}
-        action={updateTopicPanel.bind(null, topic.id, ['exercise_prompt', 'exercise_solution'])}
-        emptyLabel="+ Exercício de prática"
-      />
-
-      <div className="my-6 border-t border-slate-800" />
-
-      <CardsSection topicId={topic.id} cards={topic.cards} />
-      {topic.cards.length > 0 && (
-        <div className="mt-3">
-          <Link href={`/topics/${topic.id}/review`} className={buttonSecondaryClass}>
-            Revisar Cartões
-          </Link>
+      <div
+        style={{
+          margin: '26px 0 0',
+          background: 'linear-gradient(120deg, #FB6514, #F5A524)',
+          borderRadius: 20,
+          padding: 24,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 18,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              flex: 'none',
+              borderRadius: 14,
+              background: 'rgba(255,255,255,.22)',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            <i className="ph-fill ph-microphone-stage" style={{ color: '#fff', fontSize: 24 }} />
+          </div>
+          <div>
+            <h3 className="rcp-font-display" style={{ fontWeight: 700, fontSize: 19, color: '#fff', margin: '0 0 3px' }}>
+              Explique em 30 segundos
+            </h3>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,.85)', margin: 0 }}>
+              O teste final: ensine o tópico em voz alta, no tempo.
+            </p>
+          </div>
         </div>
-      )}
-
-      <div className="my-6 border-t border-slate-800" />
-
-      <DiscursiveSection topicId={topic.id} items={topic.discursive_questions} />
-
-      <div className="my-6 border-t border-slate-800" />
-
-      <EditablePanel
-        icon="🎤"
-        title="Explicar em 30 segundos"
-        fields={[{ name: 'pitch', label: 'Resumo de 30 segundos', value: topic.pitch }]}
-        action={updateTopicPanel.bind(null, topic.id, ['pitch'])}
-        emptyLabel="+ Resumo de 30 segundos"
-      />
-      {topic.pitch && (
-        <Link href={`/topics/${topic.id}/pitch`} className={buttonSecondaryClass}>
-          🎤 Praticar (30s)
+        <Link
+          href={`/topics/${topic.id}/pitch`}
+          className="rcp-btn-secondary"
+          style={{ flex: 'none', border: 'none', color: '#C2410C', background: '#fff', fontWeight: 700 }}
+        >
+          <i className="ph-fill ph-play" style={{ fontSize: 13 }} /> Praticar
         </Link>
-      )}
+      </div>
+
+      <div style={{ margin: '14px 0 0' }}>
+        <EditablePanel
+          icon="ph-fill ph-microphone-stage"
+          title="Resumo de 30 segundos"
+          color="#FB6514"
+          tint="#FFEBDF"
+          fields={[{ name: 'pitch', label: 'Resumo de 30 segundos', value: topic.pitch }]}
+          action={updateTopicPanel.bind(null, topic.id, ['pitch'])}
+          emptyLabel="+ Resumo de 30 segundos"
+        />
+      </div>
+
+      <div style={{ margin: '30px 0 0', textAlign: 'right' }}>
+        <ConfirmSubmitButton
+          action={deleteTopic.bind(null, topic.id)}
+          confirmMessage="Tem certeza que deseja excluir este tópico? Essa ação não pode ser desfeita."
+          className={buttonDangerClass}
+        >
+          <i className="ph ph-trash" /> Excluir tópico
+        </ConfirmSubmitButton>
+      </div>
     </div>
   );
 }

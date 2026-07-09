@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { importLegacyJson } from '@/lib/actions/import';
 import { buttonPrimaryClass } from '@/lib/ui';
 
@@ -31,7 +32,7 @@ export function ImportForm() {
   };
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <input
         type="file"
         accept="application/json"
@@ -40,18 +41,20 @@ export function ImportForm() {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
         }}
-        className="block w-full text-sm text-slate-300 file:mr-4 file:rounded-md file:border-0 file:bg-slate-800 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-200 hover:file:bg-slate-700"
+        style={{ fontSize: 14, color: '#55524B' }}
       />
-      {isPending && <p className="text-sm text-slate-400">Importando...</p>}
-      {error && <p className="rounded-md bg-red-950 p-3 text-sm text-red-300">{error}</p>}
+      {isPending && <p style={{ fontSize: 14, color: '#86827A' }}>Importando...</p>}
+      {error && (
+        <p style={{ borderRadius: 12, background: '#FDECEA', color: '#B42318', padding: 12, fontSize: 14 }}>{error}</p>
+      )}
       {result !== null && (
-        <div className="space-y-3">
-          <p className="rounded-md bg-emerald-950 p-3 text-sm text-emerald-300">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ borderRadius: 12, background: '#E1FAEF', color: '#0E7A4E', padding: 12, fontSize: 14 }}>
             {result} tópico(s) importado(s) com sucesso.
           </p>
-          <a href="/topics" className={buttonPrimaryClass}>
+          <Link href="/topics" className={buttonPrimaryClass} style={{ alignSelf: 'flex-start' }}>
             Ver meus tópicos
-          </a>
+          </Link>
         </div>
       )}
     </div>

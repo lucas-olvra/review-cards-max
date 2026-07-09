@@ -15,6 +15,31 @@ export async function getTopics(): Promise<Topic[]> {
   return data ?? [];
 }
 
+// Usado pela home: cartões da grade mostram quantos cartões/discursivas cada
+// tópico tem, sem carregar o conteúdo completo de cada um.
+export async function getTopicsWithCounts(): Promise<(Topic & { cardsN: number; discN: number })[]> {
+  const topics = await getTopics();
+  if (!topics.length) return [];
+
+  const supabase = await createClient();
+  const ids = topics.map((t) => t.id);
+  const [{ data: cards }, { data: discursive }] = await Promise.all([
+    supabase.from('cards').select('topic_id').in('topic_id', ids),
+    supabase.from('discursive_questions').select('topic_id').in('topic_id', ids),
+  ]);
+
+  const cardCounts = new Map<string, number>();
+  for (const c of cards ?? []) cardCounts.set(c.topic_id, (cardCounts.get(c.topic_id) ?? 0) + 1);
+  const discCounts = new Map<string, number>();
+  for (const d of discursive ?? []) discCounts.set(d.topic_id, (discCounts.get(d.topic_id) ?? 0) + 1);
+
+  return topics.map((t) => ({
+    ...t,
+    cardsN: cardCounts.get(t.id) ?? 0,
+    discN: discCounts.get(t.id) ?? 0,
+  }));
+}
+
 export async function getTopic(id: string): Promise<TopicWithChildren | null> {
   const supabase = await createClient();
   const { data: topic, error } = await supabase.from('topics').select('*').eq('id', id).single();

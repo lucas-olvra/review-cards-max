@@ -1,26 +1,321 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F5F3EE;
+  --foreground: #161616;
+  --accent: #2C4BE0;
+  --font-display: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+  --font-body: var(--font-instrument-sans), 'Instrument Sans', system-ui, sans-serif;
+  --font-code: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  color: #1E37B8;
+}
+
+::selection {
+  background: #C9D2FF;
+}
+
+.rcp-font-display {
+  font-family: var(--font-display);
+}
+
+.rcp-font-code {
+  font-family: var(--font-code);
+}
+
+/* ---- scrollbar (horizontal cycle map, code blocks) ---- */
+.rcp-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.rcp-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  border: 3px solid #F5F3EE;
+}
+
+/* ---- generic card ---- */
+.rcp-card {
+  background: #fff;
+  border: 1.5px solid rgba(0, 0, 0, 0.07);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.2);
+}
+
+/* ---- buttons ---- */
+.rcp-btn-primary {
+  border: none;
+  cursor: pointer;
+  font: 600 15px var(--font-body);
+  color: #fff;
+  background: var(--accent);
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px -8px rgba(44, 75, 224, 0.6);
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.rcp-btn-primary:hover {
+  filter: brightness(1.06);
+}
+.rcp-btn-primary:active {
+  transform: scale(0.98);
+}
+.rcp-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rcp-btn-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  cursor: pointer;
+  font: 600 15px var(--font-body);
+  color: #fff;
+  background: #161616;
+  padding: 12px 20px;
+  border-radius: 12px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.rcp-btn-dark:hover {
+  background: var(--accent);
+}
+.rcp-btn-dark:active {
+  transform: scale(0.98);
+}
+
+.rcp-btn-secondary {
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  cursor: pointer;
+  font: 600 14px var(--font-body);
+  color: #55524B;
+  padding: 12px 20px;
+  border-radius: 12px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.rcp-btn-secondary:hover {
+  background: #F5F3EE;
+}
+.rcp-btn-secondary:active {
+  transform: scale(0.98);
+}
+.rcp-btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rcp-btn-danger {
+  border: 1.5px solid #F7C7C0;
+  background: #FDECEA;
+  cursor: pointer;
+  font: 600 14px var(--font-body);
+  color: #B42318;
+  padding: 12px 20px;
+  border-radius: 12px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.rcp-btn-danger:hover {
+  background: #FCE0DC;
+}
+.rcp-btn-danger:active {
+  transform: scale(0.98);
+}
+.rcp-btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rcp-pill-btn {
+  border: none;
+  cursor: pointer;
+  font: 600 12px var(--font-body);
+  padding: 6px 11px;
+  border-radius: 999px;
+  transition: filter 0.15s ease;
+}
+.rcp-pill-btn:hover {
+  filter: brightness(0.97);
+}
+
+/* ---- inputs ---- */
+.rcp-input,
+.rcp-textarea {
+  width: 100%;
+  font: 400 15px var(--font-body);
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  background: #FAFAF8;
+  outline: none;
+  color: var(--foreground);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.rcp-input:focus,
+.rcp-textarea:focus {
+  border-color: var(--accent);
+  background: #fff;
+}
+.rcp-textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: var(--font-body);
+}
+
+.rcp-label {
+  display: block;
+  font: 500 13px var(--font-body);
+  color: #55524B;
+  margin-bottom: 6px;
+}
+
+/* ---- header nav ---- */
+.rcp-navlink {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: 500 14px var(--font-body);
+  color: #55524B;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.rcp-navlink:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--foreground);
+}
+
+.rcp-icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #86827A;
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.rcp-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--foreground);
+}
+
+/* ---- home: topic cards ---- */
+.rcp-topic-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: 20px;
+  padding: 22px;
+  min-height: 172px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1.5px solid;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.rcp-topic-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.35);
+}
+
+.rcp-add-card {
+  cursor: pointer;
+  border-radius: 20px;
+  min-height: 172px;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed rgba(0, 0, 0, 0.18);
+  color: #86827A;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.rcp-add-card:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---- topic detail: stage panels ---- */
+.rcp-stage-panel {
+  background: #fff;
+  border: 1.5px solid rgba(0, 0, 0, 0.07);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px -16px rgba(0, 0, 0, 0.3);
+}
+
+.rcp-panel-empty {
+  width: 100%;
+  border: 1.5px dashed rgba(0, 0, 0, 0.18);
+  border-radius: 14px;
+  padding: 14px;
+  font: 500 14px var(--font-body);
+  color: #86827A;
+  background: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.rcp-panel-empty:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---- list rows (cards / discursive) ---- */
+.rcp-list-row {
+  background: #fff;
+  border: 1.5px solid rgba(0, 0, 0, 0.07);
+  border-radius: 14px;
+  padding: 15px 17px;
+}
+
+/* ---- quiz options ---- */
+.rcp-quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  border-radius: 14px;
+  padding: 14px 15px;
+  font: 500 15px var(--font-body);
+  transition: all 0.15s ease;
+  border: 1.5px solid;
+}
+.rcp-quiz-option:disabled {
+  cursor: default;
+}
+
+/* ---- auth split layout ---- */
+.rcp-auth-grid {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+}
+@media (max-width: 860px) {
+  .rcp-auth-grid {
+    grid-template-columns: 1fr;
+  }
 }
