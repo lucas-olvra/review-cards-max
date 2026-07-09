@@ -24,6 +24,11 @@ export function repairData() {
         if (!section.useCases) section.useCases = '';
         if (!section.antiPatterns) section.antiPatterns = '';
         if (!section.commonMistakes) section.commonMistakes = '';
+        if (!section.exercise) section.exercise = { prompt: '', solution: '' };
+        if (!section.exercise.prompt) section.exercise.prompt = '';
+        if (!section.exercise.solution) section.exercise.solution = '';
+        if (!section.discursive) section.discursive = [];
+        if (!section.pitch) section.pitch = '';
         section.cards.forEach(card => {
             if (card.correct === null || card.correct === undefined || isNaN(card.correct)) card.correct = 0;
             if (!card.options) card.options = ['', '', '', ''];
@@ -31,6 +36,10 @@ export function repairData() {
             if (!card.explanation) card.explanation = '';
             if (!card.analogy) card.analogy = '';
             delete card.summary; // remove summary do card se existir de versão anterior
+        });
+        section.discursive.forEach(q => {
+            if (!q.question) q.question = '';
+            if (!q.modelAnswer) q.modelAnswer = '';
         });
     });
     save();

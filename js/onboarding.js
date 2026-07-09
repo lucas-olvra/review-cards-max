@@ -54,7 +54,18 @@ window.createExampleSection = () => {
                 explanation: '`var` tem escopo de função, não de bloco — todas as closures do loop compartilham a mesma variável `i`. Trocar por `let` resolve, pois `let` cria uma nova binding a cada iteração.',
                 analogy: ''
             }
-        ]
+        ],
+        exercise: {
+            prompt: 'Escreva uma função `makeAdder(x)` que retorna outra função capaz de somar `x` a qualquer número passado a ela. Exemplo: `makeAdder(5)(3)` deve retornar `8`.',
+            solution: '```\nfunction makeAdder(x) {\n  return function (y) {\n    return x + y;\n  };\n}\n\nconst add5 = makeAdder(5);\nadd5(3); // 8\n```'
+        },
+        discursive: [
+            {
+                question: 'Explique com suas palavras por que uma closure não "vaza" as variáveis privadas de uma função para o escopo externo.',
+                modelAnswer: 'Porque a variável só existe dentro do escopo léxico da função externa. O código de fora nunca tem acesso direto a ela — só pode interagir com o que a closure expõe (a função retornada). Isso é o que permite simular "propriedades privadas" em JavaScript sem usar classes.'
+            }
+        ],
+        pitch: 'Closure é uma função que carrega consigo o ambiente onde nasceu. Isso permite que ela continue acessando variáveis daquele escopo mesmo depois que a função externa já terminou de rodar. É a base de padrões como contadores privados, factories de função e callbacks que precisam lembrar de um valor.'
     });
     save();
     window.home();
