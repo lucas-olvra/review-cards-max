@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { Card, DiscursiveQuestion, Topic, TopicWithChildren } from '@/lib/types';
+import type { AnalogyStroke, Card, DiscursiveQuestion, Topic, TopicWithChildren } from '@/lib/types';
 
 export async function getTopics(): Promise<Topic[]> {
   const supabase = await createClient();
@@ -113,6 +113,15 @@ export async function updateTopicPanel(
     update[field] = (formData.get(field) as string) ?? '';
   }
   const { error } = await supabase.from('topics').update(update).eq('id', topicId);
+  if (error) throw error;
+  revalidatePath(`/topics/${topicId}`);
+}
+
+// Salva o desenho livre do usuário (traços do canvas de analogia). Separado de
+// updateTopicPanel porque o payload é um array JSON de traços, não FormData.
+export async function updateTopicAnalogyDrawing(topicId: string, strokes: AnalogyStroke[]) {
+  const supabase = await createClient();
+  const { error } = await supabase.from('topics').update({ analogy_drawing: strokes }).eq('id', topicId);
   if (error) throw error;
   revalidatePath(`/topics/${topicId}`);
 }

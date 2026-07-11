@@ -1,3 +1,31 @@
+export interface AnalogyShape {
+  id: string;
+  type: 'box' | 'circle' | 'text';
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
+  text?: string;
+  color?: string;
+}
+
+export interface AnalogyArrow {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+export interface AnalogyDiagram {
+  shapes: AnalogyShape[];
+  arrows: AnalogyArrow[];
+}
+
+export interface AnalogyStroke {
+  points: [number, number][];
+  color: string;
+  width: number;
+}
+
 export interface Topic {
   id: string;
   user_id: string;
@@ -11,6 +39,9 @@ export interface Topic {
   exercise_prompt: string;
   exercise_solution: string;
   pitch: string;
+  analogy_caption: string;
+  analogy_diagram: AnalogyDiagram;
+  analogy_drawing: AnalogyStroke[];
   created_at: string;
   updated_at: string;
 }

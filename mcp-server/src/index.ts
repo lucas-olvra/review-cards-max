@@ -26,6 +26,40 @@ const discursiveShape = {
   model_answer: z.string().optional().describe('O que uma boa resposta deveria cobrir'),
 };
 
+// Diagrama estruturado (não SVG bruto) — o app renderiza essas formas como
+// elementos <svg> de verdade em vez de aceitar markup arbitrário da IA.
+const analogyShapeShape = z.object({
+  id: z.string().describe('Identificador único da forma dentro do diagrama, ex: "a"'),
+  type: z.enum(['box', 'circle', 'text']).describe('Tipo da forma'),
+  x: z.number().describe('Posição X num plano de 400x240'),
+  y: z.number().describe('Posição Y num plano de 400x240'),
+  w: z.number().optional().describe('Largura (box) ou diâmetro (circle)'),
+  h: z.number().optional().describe('Altura (só para box)'),
+  text: z.string().optional().describe('Rótulo exibido dentro/ao lado da forma'),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{3,8}$/)
+    .optional()
+    .describe('Cor em hex, ex: "#2C4BE0"'),
+});
+
+const analogyArrowShape = z.object({
+  from: z.string().describe('id da forma de origem'),
+  to: z.string().describe('id da forma de destino'),
+  label: z.string().optional().describe('Rótulo da seta'),
+});
+
+const analogyFieldsShape = {
+  analogy_caption: z.string().optional().describe('Legenda curta explicando a analogia visual'),
+  analogy_diagram: z
+    .object({
+      shapes: z.array(analogyShapeShape).optional().describe('Formas do diagrama'),
+      arrows: z.array(analogyArrowShape).optional().describe('Setas conectando formas pelo id'),
+    })
+    .optional()
+    .describe('Diagrama estruturado da analogia visual — plano de 400x240'),
+};
+
 const topicFieldsShape = {
   concept_what: z.string().optional().describe('O que é o conceito'),
   concept_why: z.string().optional().describe('Por que esse conceito existe'),
@@ -36,6 +70,7 @@ const topicFieldsShape = {
   exercise_prompt: z.string().optional().describe('Enunciado de um exercício de prática'),
   exercise_solution: z.string().optional().describe('Gabarito/solução do exercício'),
   pitch: z.string().optional().describe('Resumo de 30 segundos para explicar em voz alta'),
+  ...analogyFieldsShape,
 };
 
 server.registerTool(
@@ -101,6 +136,23 @@ server.registerTool(
   async ({ topic_id, ...fields }) => {
     await api.updateTopic(topic_id, fields);
     return { content: [{ type: 'text', text: 'Tópico atualizado.' }] };
+  }
+);
+
+server.registerTool(
+  'set_topic_analogy',
+  {
+    title: 'Gerar analogia visual de um tópico',
+    description:
+      'Cria ou substitui a analogia visual de um tópico: uma legenda curta e um diagrama ' +
+      'estruturado (formas + setas, num plano de 400x240) que o app desenha como SVG. Use ' +
+      'quando o usuário pedir uma analogia/desenho para entender melhor o tópico, em vez de ' +
+      'só explicar em texto — o painel de analogia também deixa o usuário desenhar por cima.',
+    inputSchema: { topic_id: z.string().describe('ID do tópico'), ...analogyFieldsShape },
+  },
+  async ({ topic_id, ...fields }) => {
+    await api.updateTopic(topic_id, fields);
+    return { content: [{ type: 'text', text: 'Analogia visual salva.' }] };
   }
 );
 

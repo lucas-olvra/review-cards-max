@@ -44,6 +44,28 @@ export interface DiscursiveInput {
   model_answer?: string;
 }
 
+export interface AnalogyShapeInput {
+  id: string;
+  type: 'box' | 'circle' | 'text';
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
+  text?: string;
+  color?: string;
+}
+
+export interface AnalogyArrowInput {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+export interface AnalogyDiagramInput {
+  shapes?: AnalogyShapeInput[];
+  arrows?: AnalogyArrowInput[];
+}
+
 export interface CreateTopicInput {
   name: string;
   concept_what?: string;
@@ -55,6 +77,8 @@ export interface CreateTopicInput {
   exercise_prompt?: string;
   exercise_solution?: string;
   pitch?: string;
+  analogy_caption?: string;
+  analogy_diagram?: AnalogyDiagramInput;
   cards?: CardInput[];
   discursive?: DiscursiveInput[];
 }

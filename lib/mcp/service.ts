@@ -20,6 +20,23 @@ export interface DiscursiveInput {
   model_answer?: string;
 }
 
+export interface AnalogyShapeInput {
+  id: string;
+  type: 'box' | 'circle' | 'text';
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
+  text?: string;
+  color?: string;
+}
+
+export interface AnalogyArrowInput {
+  from: string;
+  to: string;
+  label?: string;
+}
+
 export interface TopicFields {
   name?: string;
   concept_what?: string;
@@ -31,6 +48,8 @@ export interface TopicFields {
   exercise_prompt?: string;
   exercise_solution?: string;
   pitch?: string;
+  analogy_caption?: string;
+  analogy_diagram?: { shapes?: AnalogyShapeInput[]; arrows?: AnalogyArrowInput[] };
 }
 
 export interface CreateTopicInput extends TopicFields {
@@ -50,7 +69,16 @@ const ALLOWED_UPDATE_FIELDS = [
   'exercise_prompt',
   'exercise_solution',
   'pitch',
+  'analogy_caption',
+  'analogy_diagram',
 ] as const satisfies readonly (keyof TopicFields)[];
+
+// Garante shapes/arrows sempre presentes (zod só valida os campos que vêm,
+// então `analogy_diagram: {shapes: [...]}` sem "arrows" é uma entrada válida
+// vinda da IA) — sem isso, `diagram.arrows.map(...)` quebraria na renderização.
+function normalizeAnalogyDiagram(diagram?: TopicFields['analogy_diagram']) {
+  return { shapes: diagram?.shapes ?? [], arrows: diagram?.arrows ?? [] };
+}
 
 async function getOwnedTopic(
   supabase: ReturnType<typeof createAdminClient>,
@@ -91,6 +119,8 @@ export async function createTopic(userId: string, input: CreateTopicInput) {
       exercise_prompt: input.exercise_prompt ?? '',
       exercise_solution: input.exercise_solution ?? '',
       pitch: input.pitch ?? '',
+      analogy_caption: input.analogy_caption ?? '',
+      analogy_diagram: normalizeAnalogyDiagram(input.analogy_diagram),
     })
     .select('id')
     .single();
@@ -138,6 +168,11 @@ export async function updateTopic(userId: string, id: string, fields: Record<str
   const update: Record<string, unknown> = {};
   for (const field of ALLOWED_UPDATE_FIELDS) {
     if (field in fields) update[field] = fields[field];
+  }
+  if ('analogy_diagram' in update) {
+    update.analogy_diagram = normalizeAnalogyDiagram(
+      update.analogy_diagram as TopicFields['analogy_diagram']
+    );
   }
 
   const { error } = await supabase.from('topics').update(update).eq('id', id);
