@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTopic, getTopics, updateTopicPanel, deleteTopic } from '@/lib/actions/topics';
 import { EditablePanel } from '@/components/EditablePanel';
+import { AnalogyPanel } from '@/components/AnalogyPanel';
 import { CardsSection } from '@/components/CardsSection';
 import { DiscursiveSection } from '@/components/DiscursiveSection';
 import { TopicHeader } from '@/components/TopicHeader';
@@ -89,6 +90,10 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
 
       <div style={{ margin: '26px 0 0' }}>
         <DiscursiveSection topicId={topic.id} items={topic.discursive_questions} />
+      </div>
+
+      <div style={{ margin: '26px 0 0' }}>
+        <AnalogyPanel topic={topic} />
       </div>
 
       <div

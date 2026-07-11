@@ -66,10 +66,17 @@ const SLIDES: Slide[] = [
     text: 'Cartões de múltipla escolha e perguntas discursivas pra fixar de verdade.',
   },
   {
+    icon: 'ph-fill ph-palette',
+    color: '#0BA5EC',
+    tint: '#E0F2FE',
+    title: '8. Analogia visual',
+    text: 'Peça pro assistente conectado via MCP pra desenhar uma analogia do tópico — e continue desenhando a sua própria versão no mesmo painel.',
+  },
+  {
     icon: 'ph-fill ph-microphone-stage',
     color: '#161616',
     tint: '#ECECEC',
-    title: '8. Explicar em voz alta',
+    title: '9. Explicar em voz alta',
     text: 'O teste final: ensinar o tópico em 30 segundos, no seu próprio tempo.',
   },
 ];
@@ -99,7 +106,7 @@ export function WelcomeCycleCarousel() {
         <AnimatedEmoji>👋</AnimatedEmoji> Bem-vindo ao Review Cards Pro
       </h2>
       <p style={{ maxWidth: 480, margin: '0 auto 22px', color: '#6B6862', fontSize: 14.5, lineHeight: 1.6 }}>
-        Cada <strong>tópico</strong> aqui é um ciclo completo de aprendizado, em 8 passos:
+        Cada <strong>tópico</strong> aqui é um ciclo completo de aprendizado, em 9 passos:
       </p>
 
       <div style={{ maxWidth: 460, margin: '0 auto' }}>
