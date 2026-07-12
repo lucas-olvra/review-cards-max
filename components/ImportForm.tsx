@@ -52,8 +52,8 @@ export function ImportForm() {
           <p style={{ borderRadius: 12, background: '#E1FAEF', color: '#0E7A4E', padding: 12, fontSize: 14 }}>
             {result} tópico(s) importado(s) com sucesso.
           </p>
-          <Link href="/topics" className={buttonPrimaryClass} style={{ alignSelf: 'flex-start' }}>
-            Ver meus tópicos
+          <Link href="/sections" className={buttonPrimaryClass} style={{ alignSelf: 'flex-start' }}>
+            Ver minhas seções
           </Link>
         </div>
       )}

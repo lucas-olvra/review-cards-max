@@ -42,6 +42,28 @@ export async function importLegacyJson(raw: string): Promise<{ imported: number 
     throw new Error('Nenhuma seção encontrada no arquivo.');
   }
 
+  // O import legado não tem noção de seções (Fase 7) — tudo cai numa seção
+  // "Programação" padrão, reaproveitando a mesma se já existir.
+  const { data: existingSection } = await supabase
+    .from('sections')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('kind', 'programming')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  let sectionId = existingSection?.id as string | undefined;
+  if (!sectionId) {
+    const { data: newSection, error: sectionError } = await supabase
+      .from('sections')
+      .insert({ user_id: user.id, name: 'Programação', kind: 'programming' })
+      .select('id')
+      .single();
+    if (sectionError || !newSection) throw new Error(sectionError?.message ?? 'Falha ao criar seção padrão.');
+    sectionId = newSection.id;
+  }
+
   let imported = 0;
   for (const section of sections) {
     if (!section?.name) continue;
@@ -50,6 +72,7 @@ export async function importLegacyJson(raw: string): Promise<{ imported: number 
       .from('topics')
       .insert({
         user_id: user.id,
+        section_id: sectionId,
         name: section.name,
         concept_what: section.concept?.what ?? section.summary ?? '',
         concept_why: section.concept?.why ?? '',
@@ -88,6 +111,6 @@ export async function importLegacyJson(raw: string): Promise<{ imported: number 
     imported++;
   }
 
-  revalidatePath('/topics');
+  revalidatePath(`/sections/${sectionId}`);
   return { imported };
 }

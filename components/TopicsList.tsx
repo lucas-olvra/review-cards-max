@@ -15,7 +15,13 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-export function TopicsList({ topics }: { topics: (Topic & { cardsN: number; discN: number })[] }) {
+export function TopicsList({
+  topics,
+  newTopicHref,
+}: {
+  topics: (Topic & { cardsN: number; discN: number })[];
+  newTopicHref: string;
+}) {
   return (
     <motion.div
       style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}
@@ -89,7 +95,7 @@ export function TopicsList({ topics }: { topics: (Topic & { cardsN: number; disc
           </motion.div>
         );
       })}
-      <Link href="/topics/new" className="rcp-add-card">
+      <Link href={newTopicHref} className="rcp-add-card">
         <div style={{ textAlign: 'center' }}>
           <i className="ph ph-plus-circle" style={{ fontSize: 30 }} />
           <div style={{ font: '500 14px var(--font-body)', marginTop: 8 }}>Novo tópico</div>
