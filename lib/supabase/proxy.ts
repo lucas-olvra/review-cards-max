@@ -47,7 +47,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = '/topics';
+    url.pathname = '/sections';
     return NextResponse.redirect(url);
   }
 

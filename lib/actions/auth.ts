@@ -13,7 +13,7 @@ export async function signIn(formData: FormData) {
   if (error) {
     redirect(`/login?error=${encodeURIComponent(translateAuthError(error.message))}`);
   }
-  redirect('/topics');
+  redirect('/sections');
 }
 
 export async function signUp(formData: FormData) {

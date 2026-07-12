@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createTopic } from '@/lib/actions/topics';
 import { accent, buttonPrimaryClass, buttonSecondaryClass, inputClass, textareaClass } from '@/lib/ui';
 import { NEW_TOPIC_FIELDS } from '@/lib/stages';
@@ -6,14 +7,15 @@ import { NEW_TOPIC_FIELDS } from '@/lib/stages';
 export default async function NewTopicPage({
   searchParams,
 }: {
-  searchParams: Promise<{ name?: string }>;
+  searchParams: Promise<{ name?: string; section_id?: string }>;
 }) {
   const params = await searchParams;
+  if (!params.section_id) redirect('/sections');
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '30px 26px 80px' }}>
       <Link
-        href="/topics"
+        href={`/sections/${params.section_id}`}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 500, color: '#86827A', marginBottom: 22 }}
       >
         <i className="ph ph-arrow-left" /> Voltar
@@ -27,6 +29,7 @@ export default async function NewTopicPage({
 
       <div className="rcp-card" style={{ borderRadius: 22, padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <form action={createTopic} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <input type="hidden" name="section_id" value={params.section_id} />
           <label style={{ display: 'block' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 7, font: '600 13.5px var(--font-body)', color: '#161616', marginBottom: 8 }}>
               <span style={{ width: 22, height: 22, borderRadius: 7, background: '#E9ECFF', display: 'grid', placeItems: 'center' }}>
@@ -59,7 +62,7 @@ export default async function NewTopicPage({
             <button type="submit" className={buttonPrimaryClass}>
               Criar tópico
             </button>
-            <Link href="/topics" className={buttonSecondaryClass}>
+            <Link href={`/sections/${params.section_id}`} className={buttonSecondaryClass}>
               Cancelar
             </Link>
           </div>

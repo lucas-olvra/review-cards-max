@@ -60,6 +60,18 @@ const analogyFieldsShape = {
     .describe('Diagrama estruturado da analogia visual — plano de 400x240'),
 };
 
+// Seção onde o tópico deve entrar — por id (se a IA já sabe qual) ou por nome
+// (cria a seção se ainda não existir, sem a IA precisar saber IDs). Se nenhum
+// dos dois for informado, cai na única seção "programming" do usuário (ou
+// pede pra desambiguar se houver mais de uma).
+const sectionFieldsShape = {
+  section_id: z.string().optional().describe('ID de uma seção já existente onde este tópico deve entrar'),
+  section_name: z
+    .string()
+    .optional()
+    .describe('Nome de uma seção — cria automaticamente se não existir ainda. Alternativa ao section_id.'),
+};
+
 const topicFieldsShape = {
   concept_what: z.string().optional().describe('O que é o conceito'),
   concept_why: z.string().optional().describe('Por que esse conceito existe'),
@@ -71,7 +83,47 @@ const topicFieldsShape = {
   exercise_solution: z.string().optional().describe('Gabarito/solução do exercício'),
   pitch: z.string().optional().describe('Resumo de 30 segundos para explicar em voz alta'),
   ...analogyFieldsShape,
+  ...sectionFieldsShape,
 };
+
+server.registerTool(
+  'list_sections',
+  {
+    title: 'Listar seções',
+    description: 'Lista as seções da conta (id, nome, tipo e idioma) — cada seção agrupa tópicos ou lições relacionadas.',
+    inputSchema: {},
+  },
+  async () => {
+    const { sections } = await api.listSections();
+    return { content: [{ type: 'text', text: JSON.stringify(sections, null, 2) }] };
+  }
+);
+
+server.registerTool(
+  'create_section',
+  {
+    title: 'Criar seção',
+    description:
+      'Cria uma seção — um contêiner que agrupa tópicos relacionados (ex: "Java", "Python") ou, ' +
+      'para idiomas, um contêiner de vocabulário/gramática de um idioma específico. Use antes de ' +
+      'criar tópicos quando o usuário quiser começar um assunto/idioma novo separado dos demais.',
+    inputSchema: {
+      name: z.string().describe('Nome da seção, ex: "Java", "Inglês"'),
+      kind: z
+        .enum(['programming', 'language'])
+        .optional()
+        .describe('Tipo de conteúdo da seção (padrão: "programming")'),
+      language: z
+        .enum(['en', 'es', 'fr', 'it', 'de'])
+        .optional()
+        .describe('Obrigatório quando kind="language": inglês/espanhol/francês/italiano/alemão'),
+    },
+  },
+  async (input) => {
+    const { id } = await api.createSection(input);
+    return { content: [{ type: 'text', text: `Seção criada com sucesso. id=${id}` }] };
+  }
+);
 
 server.registerTool(
   'create_topic',

@@ -26,9 +26,22 @@ export interface AnalogyStroke {
   width: number;
 }
 
+export type SectionKind = 'programming' | 'language';
+export type LanguageCode = 'en' | 'es' | 'fr' | 'it' | 'de';
+
+export interface Section {
+  id: string;
+  user_id: string;
+  name: string;
+  kind: SectionKind;
+  language: LanguageCode | null;
+  created_at: string;
+}
+
 export interface Topic {
   id: string;
   user_id: string;
+  section_id: string;
   name: string;
   concept_what: string;
   concept_why: string;

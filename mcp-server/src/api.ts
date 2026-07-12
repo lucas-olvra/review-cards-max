@@ -66,8 +66,16 @@ export interface AnalogyDiagramInput {
   arrows?: AnalogyArrowInput[];
 }
 
+export interface SectionInput {
+  name: string;
+  kind?: 'programming' | 'language';
+  language?: 'en' | 'es' | 'fr' | 'it' | 'de';
+}
+
 export interface CreateTopicInput {
   name: string;
+  section_id?: string;
+  section_name?: string;
   concept_what?: string;
   concept_why?: string;
   code?: string;
@@ -84,6 +92,17 @@ export interface CreateTopicInput {
 }
 
 export const api = {
+  listSections: () =>
+    request<{ sections: { id: string; name: string; kind: string; language: string | null }[] }>(
+      '/api/v1/sections'
+    ),
+
+  createSection: (input: SectionInput) =>
+    request<{ id: string }>('/api/v1/sections', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
   listTopics: () => request<{ topics: { id: string; name: string; created_at: string }[] }>('/api/v1/topics'),
 
   createTopic: (input: CreateTopicInput) =>

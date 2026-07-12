@@ -37,8 +37,16 @@ export interface AnalogyArrowInput {
   label?: string;
 }
 
+export interface SectionInput {
+  name: string;
+  kind?: 'programming' | 'language';
+  language?: 'en' | 'es' | 'fr' | 'it' | 'de';
+}
+
 export interface TopicFields {
   name?: string;
+  section_id?: string;
+  section_name?: string;
   concept_what?: string;
   concept_why?: string;
   code?: string;
@@ -90,6 +98,101 @@ async function getOwnedTopic(
   return data;
 }
 
+async function getOwnedSection(
+  supabase: ReturnType<typeof createAdminClient>,
+  id: string,
+  userId: string
+) {
+  const { data } = await supabase.from('sections').select('*').eq('id', id).eq('user_id', userId).single();
+  if (!data) throw new NotFoundError('Seção não encontrada.');
+  return data;
+}
+
+export async function listSections(userId: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('sections')
+    .select('id, name, kind, language, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function createSection(userId: string, input: SectionInput) {
+  if (!input.name?.trim()) throw new ValidationError('O campo "name" é obrigatório.');
+  const kind = input.kind ?? 'programming';
+  if (kind === 'language' && !input.language) {
+    throw new ValidationError('Seções de idioma precisam do campo "language".');
+  }
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('sections')
+    .insert({ user_id: userId, name: input.name, kind, language: kind === 'language' ? input.language : null })
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(error?.message ?? 'Falha ao criar seção.');
+  return { id: data.id as string };
+}
+
+async function getOrCreateSectionByName(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  name: string,
+  kind: 'programming' | 'language' = 'programming'
+) {
+  const { data: existing } = await supabase
+    .from('sections')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('name', name)
+    .eq('kind', kind)
+    .maybeSingle();
+  if (existing) return existing.id as string;
+
+  const { data, error } = await supabase
+    .from('sections')
+    .insert({ user_id: userId, name, kind })
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(error?.message ?? 'Falha ao criar seção.');
+  return data.id as string;
+}
+
+// Resolve qual seção um tópico deve usar, a partir de section_id/section_name
+// opcionais vindos da IA. Se nenhum for informado: usa a única seção
+// kind='programming' do usuário (cria "Programação" se não existir nenhuma),
+// ou pede pra IA desambiguar se houver mais de uma.
+async function resolveSectionId(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  { section_id, section_name }: Pick<TopicFields, 'section_id' | 'section_name'>
+): Promise<string> {
+  if (section_id) {
+    const section = await getOwnedSection(supabase, section_id, userId);
+    if (section.kind !== 'programming') {
+      throw new ValidationError('section_id precisa apontar para uma seção do tipo "programming".');
+    }
+    return section_id;
+  }
+  if (section_name) return getOrCreateSectionByName(supabase, userId, section_name, 'programming');
+
+  const { data: candidates } = await supabase
+    .from('sections')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('kind', 'programming');
+
+  if (candidates && candidates.length === 1) return candidates[0].id as string;
+  if (candidates && candidates.length > 1) {
+    throw new ValidationError(
+      'Existe mais de uma seção de programação — informe "section_id" ou "section_name" pra escolher qual usar.'
+    );
+  }
+  return getOrCreateSectionByName(supabase, userId, 'Programação', 'programming');
+}
+
 export async function listTopics(userId: string) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -105,10 +208,12 @@ export async function createTopic(userId: string, input: CreateTopicInput) {
   if (!input.name?.trim()) throw new ValidationError('O campo "name" é obrigatório.');
 
   const supabase = createAdminClient();
+  const sectionId = await resolveSectionId(supabase, userId, input);
   const { data: topic, error: topicError } = await supabase
     .from('topics')
     .insert({
       user_id: userId,
+      section_id: sectionId,
       name: input.name,
       concept_what: input.concept_what ?? '',
       concept_why: input.concept_why ?? '',
@@ -173,6 +278,9 @@ export async function updateTopic(userId: string, id: string, fields: Record<str
     update.analogy_diagram = normalizeAnalogyDiagram(
       update.analogy_diagram as TopicFields['analogy_diagram']
     );
+  }
+  if ('section_id' in fields || 'section_name' in fields) {
+    update.section_id = await resolveSectionId(supabase, userId, fields as Pick<TopicFields, 'section_id' | 'section_name'>);
   }
 
   const { error } = await supabase.from('topics').update(update).eq('id', id);

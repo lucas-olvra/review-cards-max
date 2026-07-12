@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           borderBottom: '1px solid rgba(0,0,0,.07)',
         }}
       >
-        <Link href="/topics" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+        <Link href="/sections" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
           <div
             style={{
               width: 34,
@@ -51,11 +51,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             Importar
           </Link>
           <Link
-            href="/topics/new"
+            href="/sections/new"
             className="rcp-btn-primary"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 999 }}
           >
-            <i className="ph-bold ph-plus" style={{ fontSize: 14 }} /> Novo tópico
+            <i className="ph-bold ph-plus" style={{ fontSize: 14 }} /> Nova seção
           </Link>
           <form action={signOut}>
             <button type="submit" title="Sair" className="rcp-icon-btn">
