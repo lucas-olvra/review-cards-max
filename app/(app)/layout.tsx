@@ -1,9 +1,13 @@
 import Link from 'next/link';
 import { signOut } from '@/lib/actions/auth';
 import { PageTransition } from '@/components/PageTransition';
+import { WhatsNewModal } from '@/components/WhatsNewModal';
+import { getUnseenChangelog } from '@/lib/actions/changelog';
 import { accent } from '@/lib/ui';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const unseenChangelog = await getUnseenChangelog();
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header
@@ -40,6 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </span>
         </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <WhatsNewModal initialEntries={unseenChangelog} />
           <Link
             href="/settings/tokens"
             className="rcp-navlink"

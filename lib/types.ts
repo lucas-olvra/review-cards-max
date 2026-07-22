@@ -84,3 +84,10 @@ export interface TopicWithChildren extends Topic {
   cards: Card[];
   discursive_questions: DiscursiveQuestion[];
 }
+
+export interface ChangelogEntry {
+  id: string;
+  title: string;
+  description: string;
+  created_at: string;
+}

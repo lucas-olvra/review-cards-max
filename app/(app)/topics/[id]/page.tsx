@@ -6,6 +6,7 @@ import { AnalogyPanel } from '@/components/AnalogyPanel';
 import { CardsSection } from '@/components/CardsSection';
 import { DiscursiveSection } from '@/components/DiscursiveSection';
 import { TopicHeader } from '@/components/TopicHeader';
+import { TopicAudioPlayer } from '@/components/TopicAudioPlayer';
 import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
 import { buttonDangerClass } from '@/lib/ui';
 import { SIMPLE_STAGE_DEFS, PRACTICE_STAGE_DEF } from '@/lib/stages';
@@ -30,6 +31,8 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
       </Link>
 
       <TopicHeader topicId={topic.id} name={topic.name} icon={palette.icon} color={palette.bg} />
+
+      <TopicAudioPlayer topic={topic} />
 
       <div
         className="rcp-scroll"
