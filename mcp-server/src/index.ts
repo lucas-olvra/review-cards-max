@@ -3,7 +3,6 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { api } from './api.js';
-import { exportTopicToObsidian } from './obsidian.js';
 
 const server = new McpServer({
   name: 'review-cards-mcp',
@@ -206,45 +205,6 @@ server.registerTool(
   async ({ topic_id, ...fields }) => {
     await api.updateTopic(topic_id, fields);
     return { content: [{ type: 'text', text: 'Analogia visual salva.' }] };
-  }
-);
-
-server.registerTool(
-  'export_topic_to_obsidian',
-  {
-    title: 'Exportar tópico para o Obsidian',
-    description:
-      'Gera (ou atualiza) uma nota Markdown do tópico em "<vault>/Review Cards/<nome>.md" no ' +
-      'vault local do Obsidian (requer a variável de ambiente OBSIDIAN_VAULT_PATH configurada ' +
-      'no servidor MCP — só funciona rodando localmente via stdio, não no servidor remoto). Antes ' +
-      'de chamar, rode list_topics para ver quais tópicos já existem e decida quais são parecidos ' +
-      'o suficiente pra linkar em related_topic_names — não é preciso que o tópico relacionado já ' +
-      'tenha sido exportado antes: o link [[assim]] fica "não resolvido" no grafo do Obsidian até ' +
-      'essa outra nota existir, e conecta sozinho depois.',
-    inputSchema: {
-      topic_id: z.string().describe('ID do tópico a exportar'),
-      related_topic_names: z
-        .array(z.string())
-        .optional()
-        .describe('Nomes de outros tópicos (já existentes ou não) pra linkar como conexões, ex: ["Polimorfismo em Java"]'),
-    },
-  },
-  async ({ topic_id, related_topic_names }) => {
-    const topic = await api.getTopic(topic_id);
-    const filePath = await exportTopicToObsidian(
-      {
-        id: String(topic.id),
-        name: String(topic.name),
-        concept_what: topic.concept_what as string | undefined,
-        concept_why: topic.concept_why as string | undefined,
-        code: topic.code as string | undefined,
-        use_cases: topic.use_cases as string | undefined,
-        anti_patterns: topic.anti_patterns as string | undefined,
-        common_mistakes: topic.common_mistakes as string | undefined,
-      },
-      related_topic_names ?? []
-    );
-    return { content: [{ type: 'text', text: `Nota exportada para ${filePath}` }] };
   }
 );
 

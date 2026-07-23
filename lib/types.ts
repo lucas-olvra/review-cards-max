@@ -85,9 +85,15 @@ export interface TopicWithChildren extends Topic {
   discursive_questions: DiscursiveQuestion[];
 }
 
+export interface ChangelogStep {
+  title: string;
+  text: string;
+}
+
 export interface ChangelogEntry {
   id: string;
   title: string;
   description: string;
+  steps: ChangelogStep[] | null;
   created_at: string;
 }
