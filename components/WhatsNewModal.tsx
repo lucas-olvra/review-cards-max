@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { markChangelogSeen } from '@/lib/actions/changelog';
 import { accent, buttonPrimaryClass } from '@/lib/ui';
-import type { ChangelogEntry } from '@/lib/types';
+import type { ChangelogEntry, ChangelogStep } from '@/lib/types';
 
 const noopSubscribe = () => () => {};
 
@@ -18,6 +18,70 @@ function useMounted() {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+}
+
+// Passo-a-passo interativo pra novidades que exigem alguma configuração (ex:
+// conectar um servidor MCP) — texto sozinho já mostrou ser insuficiente pra
+// isso, então entradas com `steps` ganham esse mini carrossel navegável em
+// vez de só uma descrição corrida.
+function StepCarousel({ steps }: { steps: ChangelogStep[] }) {
+  const [index, setIndex] = useState(0);
+  const step = steps[index];
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          style={{ borderRadius: 12, background: '#F3F4FF', padding: '12px 14px', minHeight: 64 }}
+        >
+          <p className="rcp-font-display" style={{ font: '700 12.5px var(--font-display)', color: accent, margin: '0 0 4px' }}>
+            {step.title}
+          </p>
+          <p style={{ fontSize: 13.5, lineHeight: 1.55, color: '#55524B', margin: 0, whiteSpace: 'pre-wrap' }}>{step.text}</p>
+        </motion.div>
+      </AnimatePresence>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+        <button
+          type="button"
+          onClick={() => setIndex((i) => Math.max(0, i - 1))}
+          disabled={index === 0}
+          className="rcp-icon-btn"
+          title="Passo anterior"
+        >
+          <i className="ph-bold ph-caret-left" style={{ fontSize: 14 }} />
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          {steps.map((s, i) => (
+            <span
+              key={s.title}
+              style={{
+                width: i === index ? 16 : 6,
+                height: 6,
+                borderRadius: 999,
+                background: i === index ? accent : 'rgba(0,0,0,.15)',
+                transition: 'all 0.2s ease',
+              }}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setIndex((i) => Math.min(steps.length - 1, i + 1))}
+          disabled={index === steps.length - 1}
+          className="rcp-icon-btn"
+          title="Próximo passo"
+        >
+          <i className="ph-bold ph-caret-right" style={{ fontSize: 14 }} />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function EntryList({ entries }: { entries: ChangelogEntry[] }) {
@@ -40,6 +104,7 @@ function EntryList({ entries }: { entries: ChangelogEntry[] }) {
             <span style={{ fontSize: 12, color: '#86827A' }}>{formatDate(entry.created_at)}</span>
           </div>
           <p style={{ fontSize: 14.5, lineHeight: 1.6, color: '#55524B', margin: 0 }}>{entry.description}</p>
+          {entry.steps && entry.steps.length > 0 && <StepCarousel steps={entry.steps} />}
         </div>
       ))}
     </div>
