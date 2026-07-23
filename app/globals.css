@@ -332,3 +332,34 @@ a:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- header nav: linha horizontal no desktop, botão ≡ + dropdown no mobile ---- */
+.rcp-nav-desktop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rcp-nav-mobile {
+  display: none;
+  position: relative;
+}
+@media (max-width: 640px) {
+  .rcp-nav-desktop {
+    display: none;
+  }
+  .rcp-nav-mobile {
+    display: block;
+  }
+}
+
+/* ---- seletor de duas colunas (ex: tipo de seção) — 1 coluna em telas bem estreitas ---- */
+.rcp-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 480px) {
+  .rcp-two-col {
+    grid-template-columns: 1fr;
+  }
+}

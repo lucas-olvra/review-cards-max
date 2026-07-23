@@ -24,7 +24,7 @@ export function TopicsList({
 }) {
   return (
     <motion.div
-      style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}
       variants={container}
       initial="hidden"
       animate="show"

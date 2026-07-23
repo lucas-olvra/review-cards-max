@@ -177,6 +177,11 @@ export default async function TokensPage() {
             <code className="rcp-font-code" style={{ fontSize: 12 }}>mcp-server/README.md</code> no
             repositório do projeto.
           </p>
+          <p style={{ fontSize: 13, color: '#6B6862', margin: '8px 0 0', lineHeight: 1.55 }}>
+            É essa versão local que também permite exportar tópicos como notas do{' '}
+            <strong>Obsidian</strong>, linkadas a outros tópicos parecidos — o servidor remoto não
+            tem acesso ao disco do seu computador, então esse recurso só existe rodando localmente.
+          </p>
         </details>
 
         <details style={{ marginTop: 8 }}>

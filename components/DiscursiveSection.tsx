@@ -94,7 +94,7 @@ export function DiscursiveSection({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <span style={{ width: 30, height: 30, borderRadius: 9, display: 'grid', placeItems: 'center', background: DISC_TINT }}>
             <i className="ph-fill ph-chat-circle-dots" style={{ color: DISC_COLOR, fontSize: 16 }} />
