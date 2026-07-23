@@ -48,7 +48,7 @@ export default async function NewSectionPage({
             <span style={{ display: 'block', font: '600 13.5px var(--font-body)', color: '#161616', marginBottom: 8 }}>
               Tipo de conteúdo
             </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="rcp-two-col" style={{ gap: 10 }}>
               <div
                 style={{
                   border: `1.5px solid ${accent}`,

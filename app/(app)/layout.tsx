@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { signOut } from '@/lib/actions/auth';
 import { PageTransition } from '@/components/PageTransition';
 import { WhatsNewModal } from '@/components/WhatsNewModal';
+import { HeaderNav } from '@/components/HeaderNav';
 import { getUnseenChangelog } from '@/lib/actions/changelog';
 import { accent } from '@/lib/ui';
 
@@ -45,28 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <WhatsNewModal initialEntries={unseenChangelog} />
-          <Link
-            href="/settings/tokens"
-            className="rcp-navlink"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-          >
-            <i className="ph-fill ph-robot" style={{ fontSize: 15 }} /> Tokens &amp; MCP
-          </Link>
-          <Link href="/import" className="rcp-navlink">
-            Importar
-          </Link>
-          <Link
-            href="/sections/new"
-            className="rcp-btn-primary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 999 }}
-          >
-            <i className="ph-bold ph-plus" style={{ fontSize: 14 }} /> Nova seção
-          </Link>
-          <form action={signOut}>
-            <button type="submit" title="Sair" className="rcp-icon-btn">
-              <i className="ph ph-sign-out" style={{ fontSize: 18 }} />
-            </button>
-          </form>
+          <HeaderNav />
         </nav>
       </header>
       <main style={{ flex: 1 }}>

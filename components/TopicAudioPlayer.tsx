@@ -220,7 +220,7 @@ export function TopicAudioPlayer({ topic }: { topic: Topic }) {
             </p>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <button
               type="button"
               onClick={() => handleSkip(-1)}

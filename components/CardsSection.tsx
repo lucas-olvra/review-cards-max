@@ -112,7 +112,7 @@ export function CardsSection({ topicId, cards }: { topicId: string; cards: Card[
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <span style={{ width: 30, height: 30, borderRadius: 9, display: 'grid', placeItems: 'center', background: CARD_TINT }}>
             <i className="ph-fill ph-cards" style={{ color: CARD_COLOR, fontSize: 16 }} />

@@ -125,15 +125,15 @@ export function DiscursiveRunner({
                 <em style={{ color: '#86827A' }}>Sem resposta modelo cadastrada.</em>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 10, margin: '16px 0 0' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, margin: '16px 0 0' }}>
               <button
                 onClick={() => advance(true)}
                 className="rcp-btn-primary"
-                style={{ flex: 1, background: '#12B76A', boxShadow: 'none', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}
+                style={{ flex: '1 1 140px', background: '#12B76A', boxShadow: 'none', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}
               >
                 <i className="ph-bold ph-check" /> Acertei
               </button>
-              <button onClick={() => advance(false)} className={buttonSecondaryClass} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => advance(false)} className={buttonSecondaryClass} style={{ flex: '1 1 140px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
                 <i className="ph-bold ph-arrow-counter-clockwise" /> Preciso revisar
               </button>
             </div>

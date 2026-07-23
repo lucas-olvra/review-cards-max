@@ -80,7 +80,7 @@ export function SectionsList({ sections }: { sections: (Section & { itemsN: numb
           Programação
         </h2>
         <motion.div
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}
           variants={container}
           initial="hidden"
           animate="show"
@@ -103,7 +103,7 @@ export function SectionsList({ sections }: { sections: (Section & { itemsN: numb
             Idiomas
           </h2>
           <motion.div
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}
             variants={container}
             initial="hidden"
             animate="show"
