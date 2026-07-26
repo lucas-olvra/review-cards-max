@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { FramesPanel, type FrameEntry } from '@/components/language/FramesPanel';
 import { WordsPanel } from '@/components/language/WordsPanel';
 import { NarrationPanel } from '@/components/language/NarrationPanel';
+import { McpHint } from '@/components/McpHint';
 import { accent } from '@/lib/ui';
 import type { LanguageWordGroup } from '@/lib/language/seed';
 import type { NarrationStats } from '@/lib/language/stats';
@@ -129,8 +130,25 @@ function MethodCard() {
   );
 }
 
+// Equivalente ao "Pedir um tópico pra IA" das seções de programação: lá a
+// unidade é o tópico inteiro, aqui é um bloco temático de moldes + palavras.
+// O exemplo acompanha a aba aberta, porque pedir molde e pedir palavra são
+// pedidos diferentes.
+function askExample(tab: Tab, sectionName: string, languageLabel: string) {
+  const alvo = `na seção "${sectionName}"`;
+  if (tab === 'words') {
+    return `Adicione 30 palavras de ${languageLabel} do tema aeroporto e viagem ${alvo}, agrupadas por função na frase.`;
+  }
+  if (tab === 'narration') {
+    return `Adicione 8 moldes e 25 palavras de ${languageLabel} sobre a minha rotina de trabalho ${alvo}, pra eu usar narrando em voz alta.`;
+  }
+  return `Adicione 10 moldes de frase de ${languageLabel} pra reunião de trabalho ${alvo}, cada um com 3 exemplos bem diferentes entre si.`;
+}
+
 export function LanguageHub({
   sectionId,
+  sectionName,
+  languageLabel,
   frames,
   masteredKeys,
   groups,
@@ -140,6 +158,8 @@ export function LanguageHub({
   stats,
 }: {
   sectionId: string;
+  sectionName: string;
+  languageLabel: string;
   frames: FrameEntry[];
   masteredKeys: string[];
   groups: LanguageWordGroup[];
@@ -153,6 +173,21 @@ export function LanguageHub({
   return (
     <>
       <MethodCard />
+
+      <div
+        className="rcp-card"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 18px', marginBottom: 18 }}
+      >
+        <span style={{ fontSize: 14, color: '#6B6862', lineHeight: 1.5 }}>
+          Quer moldes e palavras de um tema específico? Peça o bloco inteiro pra IA.
+        </span>
+        <McpHint
+          label="Pedir um bloco pra IA"
+          title="Peça o bloco inteiro, não item por item"
+          body={`A IA adiciona moldes e palavras de ${languageLabel} direto em "${sectionName}", já agrupados e com exemplos.`}
+          example={askExample(tab, sectionName, languageLabel)}
+        />
+      </div>
 
       <div className="rcp-scroll" style={{ display: 'flex', gap: 6, marginBottom: 22, overflowX: 'auto', paddingBottom: 4 }}>
         {TABS.map((t) => {
