@@ -8,6 +8,7 @@ import { TopicsList } from '@/components/TopicsList';
 import { LanguageHub } from '@/components/language/LanguageHub';
 import { type FrameEntry } from '@/components/language/FramesPanel';
 import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
+import { McpHint } from '@/components/McpHint';
 import { LANGUAGE_LABELS, countSeedWords, planFor } from '@/lib/language/seed';
 import { computeNarrationStats } from '@/lib/language/stats';
 import { buttonDangerClass } from '@/lib/ui';
@@ -121,6 +122,17 @@ export default async function SectionPage({ params }: { params: Promise<{ id: st
               <i className="ph-bold ph-arrow-right" style={{ color: '#7C3AED', fontSize: 16 }} />
             </Link>
           )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+            <span style={{ font: '600 15px var(--font-body)', color: '#161616' }}>
+              Tópicos <span style={{ color: '#A29E96', fontWeight: 500 }}>· {topics.length}</span>
+            </span>
+            <McpHint
+              label="Pedir um tópico pra IA"
+              title="Peça o tópico inteiro, não campo por campo"
+              body={`A IA cria o tópico direto em "${section.name}" já com todos os campos do ciclo preenchidos, cartões, discursivas e a analogia visual.`}
+              example={`Crie um tópico completo sobre enum em Java na seção "${section.name}", preenchendo todos os campos do ciclo, com 4 cartões e 2 discursivas.`}
+            />
+          </div>
           <TopicsList topics={topics} newTopicHref={`/topics/new?section_id=${section.id}`} />
         </>
       )}

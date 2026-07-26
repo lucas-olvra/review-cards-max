@@ -210,9 +210,17 @@ export function createReviewCardsMcpServer(userId: string) {
     {
       title: 'Criar tópico de estudo completo',
       description:
-        'Cria um tópico de estudo inteiro de uma vez — conceito, código, onde usar, onde não ' +
-        'usar, erros comuns, exercício de prática, cartões de múltipla escolha e perguntas ' +
-        'discursivas — em vez de preencher cada campo manualmente pela interface.',
+        'Cria um tópico de estudo inteiro de uma vez, em vez de o usuário preencher campo a ' +
+        'campo pela interface.\n\n' +
+        'Preencha TODOS os campos do ciclo, não só os obrigatórios: concept_what, concept_why, ' +
+        'code, use_cases, anti_patterns, common_mistakes, exercise_prompt, exercise_solution e ' +
+        'pitch. Um tópico com metade dos campos vazios deixa buracos visíveis na interface — se ' +
+        'faltar informação pra algum campo, escreva o que der em vez de omitir. Inclua também ' +
+        'cartões de múltipla escolha, perguntas discursivas e a analogia visual.\n\n' +
+        'Direcione o tópico pra seção certa: se o usuário disse em qual está estudando, passe ' +
+        'section_name (cria se não existir) ou section_id. Em "anti_patterns", quando a ' +
+        'limitação for "use outra coisa aqui", nomeie a alternativa — e se essa alternativa ' +
+        'também for um tópico da conta, considere ligar os dois com set_topic_contrast depois.',
       inputSchema: {
         name: z.string().describe('Nome do tópico, ex: "Closures em JavaScript"'),
         ...topicFieldsShape,
