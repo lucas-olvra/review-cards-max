@@ -31,11 +31,20 @@ const discursiveShape = {
 const analogyShapeShape = z.object({
   id: z.string().describe('Identificador único da forma dentro do diagrama, ex: "a"'),
   type: z.enum(['box', 'circle', 'text']).describe('Tipo da forma'),
-  x: z.number().describe('Posição X num plano de 400x240'),
-  y: z.number().describe('Posição Y num plano de 400x240'),
-  w: z.number().optional().describe('Largura (box) ou diâmetro (circle)'),
-  h: z.number().optional().describe('Altura (só para box)'),
-  text: z.string().optional().describe('Rótulo exibido dentro/ao lado da forma'),
+  x: z.number().describe('Posição X. A área de referência é 400x240 e o app expande a visão se precisar, mas mantenha o diagrama compacto e alinhado.'),
+  y: z.number().describe('Posição Y. Distribua as formas em linhas/colunas regulares — nada de sobrepor.'),
+  w: z
+    .number()
+    .optional()
+    .describe('Largura (box) ou diâmetro (circle). A largura NÃO cresce sozinha: dimensione pelo texto (~7px por caractere da maior linha).'),
+  h: z.number().optional().describe('Altura mínima (só para box) — a caixa cresce sozinha se o texto precisar de mais linhas.'),
+  text: z
+    .string()
+    .optional()
+    .describe(
+      'Rótulo da forma. Use \\n para quebrar linha — o app quebra e centraliza sozinho. ' +
+        'Prefira 2 ou 3 linhas curtas a uma linha longa, e mantenha cada linha em torno de 20 caracteres.'
+    ),
   color: z
     .string()
     .regex(/^#[0-9a-fA-F]{3,8}$/)
@@ -57,7 +66,10 @@ const analogyFieldsShape = {
       arrows: z.array(analogyArrowShape).optional().describe('Setas conectando formas pelo id'),
     })
     .optional()
-    .describe('Diagrama estruturado da analogia visual — plano de 400x240'),
+    .describe(
+      'Diagrama estruturado da analogia visual. Mire em 3 a 6 formas: diagrama cheio fica ' +
+        'ilegível no tamanho em que é exibido. Deixe pelo menos 20px de respiro entre as formas.'
+    ),
 };
 
 // Seção onde o tópico deve entrar — por id (se a IA já sabe qual) ou por nome
@@ -183,9 +195,17 @@ server.registerTool(
   {
     title: 'Criar tópico de estudo completo',
     description:
-      'Cria um tópico de estudo inteiro de uma vez — conceito, código, onde usar, onde não ' +
-      'usar, erros comuns, exercício de prática, cartões de múltipla escolha e perguntas ' +
-      'discursivas — em vez de preencher cada campo manualmente pela interface.',
+      'Cria um tópico de estudo inteiro de uma vez, em vez de o usuário preencher campo a ' +
+      'campo pela interface.\n\n' +
+      'Preencha TODOS os campos do ciclo, não só os obrigatórios: concept_what, concept_why, ' +
+      'code, use_cases, anti_patterns, common_mistakes, exercise_prompt, exercise_solution e ' +
+      'pitch. Um tópico com metade dos campos vazios deixa buracos visíveis na interface — se ' +
+      'faltar informação pra algum campo, escreva o que der em vez de omitir. Inclua também ' +
+      'cartões de múltipla escolha, perguntas discursivas e a analogia visual.\n\n' +
+      'Direcione o tópico pra seção certa: se o usuário disse em qual está estudando, passe ' +
+      'section_name (cria se não existir) ou section_id. Em "anti_patterns", quando a ' +
+      'limitação for "use outra coisa aqui", nomeie a alternativa — e se essa alternativa ' +
+      'também for um tópico da conta, considere ligar os dois com set_topic_contrast depois.',
     inputSchema: {
       name: z.string().describe('Nome do tópico, ex: "Closures em JavaScript"'),
       ...topicFieldsShape,
@@ -250,9 +270,12 @@ server.registerTool(
     title: 'Gerar analogia visual de um tópico',
     description:
       'Cria ou substitui a analogia visual de um tópico: uma legenda curta e um diagrama ' +
-      'estruturado (formas + setas, num plano de 400x240) que o app desenha como SVG. Use ' +
-      'quando o usuário pedir uma analogia/desenho para entender melhor o tópico, em vez de ' +
-      'só explicar em texto — o painel de analogia também deixa o usuário desenhar por cima.',
+      'estruturado (formas + setas) que o app desenha como SVG. Use quando o usuário pedir ' +
+      'uma analogia/desenho para entender melhor o tópico, em vez de só explicar em texto — ' +
+      'o painel de analogia também deixa o usuário desenhar por cima.\n\n' +
+      'O diagrama é lido num espaço pequeno, então favoreça clareza: poucas formas, rótulos ' +
+      'curtos quebrados com \\n, e as setas carregando o verbo da relação ("aponta para", ' +
+      '"herda de") em vez de caixas com frases inteiras.',
     inputSchema: { topic_id: z.string().describe('ID do tópico'), ...analogyFieldsShape },
   },
   async ({ topic_id, ...fields }) => {

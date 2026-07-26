@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createTopic } from '@/lib/actions/topics';
+import { getSection } from '@/lib/actions/sections';
+import { McpHint } from '@/components/McpHint';
 import { accent, buttonPrimaryClass, buttonSecondaryClass, inputClass, textareaClass } from '@/lib/ui';
 import { NEW_TOPIC_FIELDS } from '@/lib/stages';
 
@@ -11,6 +13,9 @@ export default async function NewTopicPage({
 }) {
   const params = await searchParams;
   if (!params.section_id) redirect('/sections');
+
+  const section = await getSection(params.section_id);
+  const sectionName = section?.name ?? 'esta seção';
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '30px 26px 80px' }}>
@@ -23,9 +28,27 @@ export default async function NewTopicPage({
       <h1 className="rcp-font-display" style={{ fontWeight: 700, fontSize: 34, letterSpacing: '-.025em', margin: '0 0 6px' }}>
         Novo tópico
       </h1>
-      <p style={{ fontSize: 15, color: '#6B6862', margin: '0 0 30px' }}>
+      <p style={{ fontSize: 15, color: '#6B6862', margin: '0 0 18px' }}>
         Comece pelo essencial. Você pode adicionar cartões, código e prática depois.
       </p>
+
+      {/* Preencher os 7 campos do ciclo na mão é o caminho longo. Quem tem o MCP
+          ligado consegue o tópico inteiro de uma vez — a alternativa fica visível
+          aqui, antes do usuário começar a digitar. */}
+      <div
+        className="rcp-card"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 18px', marginBottom: 22 }}
+      >
+        <span style={{ fontSize: 14, color: '#6B6862', lineHeight: 1.5 }}>
+          Não quer preencher na mão? Peça o tópico inteiro pra IA.
+        </span>
+        <McpHint
+          label="Pedir um tópico pra IA"
+          title="Peça o tópico inteiro, não campo por campo"
+          body={`A IA cria o tópico direto em "${sectionName}" já com todos os campos do ciclo preenchidos, cartões, discursivas e a analogia visual.`}
+          example={`Crie um tópico completo sobre enum em Java na seção "${sectionName}", preenchendo todos os campos do ciclo, com 4 cartões e 2 discursivas.`}
+        />
+      </div>
 
       <div className="rcp-card" style={{ borderRadius: 22, padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <form action={createTopic} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
