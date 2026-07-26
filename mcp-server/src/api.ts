@@ -99,6 +99,22 @@ export interface LanguageItemInput {
   category?: string;
 }
 
+export interface ContrastScenarioInput {
+  situation: string;
+  answer_topic: string;
+  why?: string;
+}
+
+export interface ContrastInput {
+  topic_a: string;
+  topic_b: string;
+  confusion?: string;
+  decisive_question?: string;
+  choose_a_when?: string;
+  choose_b_when?: string;
+  scenarios?: ContrastScenarioInput[];
+}
+
 export const api = {
   listSections: () =>
     request<{ sections: { id: string; name: string; kind: string; language: string | null }[] }>(
@@ -149,5 +165,13 @@ export const api = {
     request<{ id: string }>(`/api/v1/topics/${topicId}/discursive`, {
       method: 'POST',
       body: JSON.stringify(item),
+    }),
+
+  listContrasts: () => request<{ contrasts: Record<string, unknown>[] }>('/api/v1/contrasts'),
+
+  setContrast: (input: ContrastInput) =>
+    request<{ id: string; scenarios: number }>('/api/v1/contrasts', {
+      method: 'PUT',
+      body: JSON.stringify(input),
     }),
 };

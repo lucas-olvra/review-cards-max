@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSection, deleteSection } from '@/lib/actions/sections';
 import { getTopicsWithCounts } from '@/lib/actions/topics';
+import { countSectionDrill } from '@/lib/actions/contrasts';
 import { getLanguageItems, getMasteredKeys, getNarrationSessions } from '@/lib/actions/language';
 import { TopicsList } from '@/components/TopicsList';
 import { LanguageHub } from '@/components/language/LanguageHub';
@@ -22,6 +23,8 @@ export default async function SectionPage({ params }: { params: Promise<{ id: st
   const [items, masteredKeys, sessions] = isLanguage
     ? await Promise.all([getLanguageItems(id), getMasteredKeys(id), getNarrationSessions(id)])
     : [[], [], []];
+
+  const drillN = isLanguage ? 0 : await countSectionDrill(id);
 
   const plan = planFor(isLanguage ? section.language : null);
 
@@ -90,7 +93,36 @@ export default async function SectionPage({ params }: { params: Promise<{ id: st
           stats={computeNarrationStats(sessions)}
         />
       ) : (
-        <TopicsList topics={topics} newTopicHref={`/topics/new?section_id=${section.id}`} />
+        <>
+          {drillN > 0 && (
+            <Link
+              href={`/sections/${section.id}/discriminate`}
+              className="rcp-card"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                padding: '16px 18px',
+                marginBottom: 16,
+                textDecoration: 'none',
+              }}
+            >
+              <span style={{ width: 40, height: 40, flex: 'none', borderRadius: 12, display: 'grid', placeItems: 'center', background: '#F1E9FE' }}>
+                <i className="ph-fill ph-target" style={{ color: '#7C3AED', fontSize: 20 }} />
+              </span>
+              <span style={{ flex: 1 }}>
+                <span className="rcp-font-display" style={{ display: 'block', fontWeight: 600, fontSize: 16, color: '#161616' }}>
+                  Treinar discriminação
+                </span>
+                <span style={{ display: 'block', fontSize: 13.5, color: '#6B6862', marginTop: 2 }}>
+                  {drillN} {drillN === 1 ? 'cenário' : 'cenários'} onde dois tópicos competem — sem dizer de qual eles vieram
+                </span>
+              </span>
+              <i className="ph-bold ph-arrow-right" style={{ color: '#7C3AED', fontSize: 16 }} />
+            </Link>
+          )}
+          <TopicsList topics={topics} newTopicHref={`/topics/new?section_id=${section.id}`} />
+        </>
       )}
 
       <div style={{ margin: '40px 0 0', textAlign: 'right' }}>

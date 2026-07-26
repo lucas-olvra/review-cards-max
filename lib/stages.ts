@@ -34,6 +34,10 @@ export const NEW_TOPIC_FIELDS = [
   { key: 'concept_what', label: 'O que é (conceito)', ph: 'A ideia central, em uma ou duas frases…', icon: 'ph-fill ph-brain', color: '#2C4BE0', tint: '#E9ECFF' },
   { key: 'concept_why', label: 'Por que existe', ph: 'Que problema isso resolve…', icon: 'ph-fill ph-question', color: '#2C4BE0', tint: '#E9ECFF' },
   { key: 'use_cases', label: 'Onde usar — casos reais', ph: 'Situações concretas…', icon: 'ph-fill ph-check-circle', color: '#0E9F6E', tint: '#E1FAEF' },
-  { key: 'anti_patterns', label: 'Onde não usar — trade-offs', ph: 'Limitações e alternativas…', icon: 'ph-fill ph-prohibit', color: '#EF4444', tint: '#FEECEA' },
+  // O placeholder pede o substituto de propósito: "não use aqui" sozinho não
+  // ajuda na hora de escolher — nomear a alternativa é o que transforma o campo
+  // em decisão. Quando a alternativa também é um tópico seu, o painel
+  // "Confundo com" leva isso adiante com a pergunta que decide.
+  { key: 'anti_patterns', label: 'Onde não usar — trade-offs', ph: 'Limitações — e o que você usaria no lugar…', icon: 'ph-fill ph-prohibit', color: '#EF4444', tint: '#FEECEA' },
   { key: 'common_mistakes', label: 'Erros comuns', ph: 'Armadilhas frequentes…', icon: 'ph-fill ph-warning', color: '#D97706', tint: '#FDF0DC' },
 ] as const;

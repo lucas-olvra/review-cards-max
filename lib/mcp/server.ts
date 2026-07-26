@@ -1,4 +1,4 @@
-// Registra as mesmas 7 tools do mcp-server local (stdio), mas ligadas
+// Registra as mesmas tools do mcp-server local (stdio), mas ligadas
 // diretamente ao service compartilhado — sem round-trip HTTP, já que este
 // servidor roda dentro do próprio processo Next.js. Uma instância nova é
 // criada por requisição (ver app/api/mcp/route.ts, modo stateless).
@@ -12,9 +12,11 @@ import {
   createTopic,
   deleteTopic,
   getTopic,
+  listContrasts,
   listLanguageItems,
   listSections,
   listTopics,
+  setTopicContrast,
   updateTopic,
 } from '@/lib/mcp/service';
 
@@ -314,6 +316,75 @@ export function createReviewCardsMcpServer(userId: string) {
       safeCall(async () => {
         const { id } = await addDiscursive(userId, topic_id, item);
         return `Pergunta discursiva criada. id=${id}`;
+      })
+  );
+
+  server.registerTool(
+    'set_topic_contrast',
+    {
+      title: 'Ligar dois tópicos que se confundem',
+      description:
+        'Cria ou substitui o contraste entre dois tópicos — o material de "por que este e não ' +
+        'aquele". Use quando o usuário disser que sabe o que cada um é mas trava na hora de ' +
+        'escolher, ou quando dois tópicos da conta forem alternativas concorrentes.\n\n' +
+        'O campo mais importante é "decisive_question": NÃO repita a definição de cada um (o ' +
+        'usuário já tem isso nos dois tópicos) — escreva o teste concreto que resolve a escolha ' +
+        'na hora, de preferência uma pergunta de sim/não sobre o problema em mãos. Exemplo bom: ' +
+        '"esse valor tem irmãos? consigo listar todos e seria bug receber um fora da lista?". ' +
+        'Exemplo ruim: "final impede reatribuição e enum define um conjunto fixo".\n\n' +
+        'Em "scenarios", escreva situações de código do mundo real onde os dois competem de ' +
+        'verdade — cada uma deve ser decidível pela decisive_question, e o conjunto deve cair ' +
+        'nos dois lados (não faça todos com a mesma resposta). Escreva a situação sem citar o ' +
+        'nome de nenhum dos dois tópicos: elas são exibidas embaralhadas, e citar o nome entrega ' +
+        'a resposta.',
+      inputSchema: {
+        topic_a: z.string().describe('ID de um dos tópicos (use list_topics para achar)'),
+        topic_b: z.string().describe('ID do outro tópico'),
+        confusion: z
+          .string()
+          .optional()
+          .describe('Por que os dois se confundem — normalmente o traço que fez os dois caírem na mesma gaveta mental'),
+        decisive_question: z
+          .string()
+          .optional()
+          .describe('O teste que decide a escolha na hora. É o campo central desta tool — leia a descrição.'),
+        choose_a_when: z.string().optional().describe('Quando escolher o tópico informado em topic_a'),
+        choose_b_when: z.string().optional().describe('Quando escolher o tópico informado em topic_b'),
+        scenarios: z
+          .array(
+            z.object({
+              situation: z
+                .string()
+                .describe('A situação concreta, sem citar o nome de nenhum dos dois tópicos'),
+              answer_topic: z.string().describe('ID do tópico que vence nessa situação (topic_a ou topic_b)'),
+              why: z.string().optional().describe('O que nessa situação decidiu a escolha'),
+            })
+          )
+          .optional()
+          .describe('Exercício de discriminação — 4 a 6 cenários, distribuídos entre os dois lados'),
+      },
+    },
+    async (input) =>
+      safeCall(async () => {
+        const { id, scenarios } = await setTopicContrast(userId, input);
+        return `Contraste salvo com ${scenarios} cenário(s) de treino. id=${id}`;
+      })
+  );
+
+  server.registerTool(
+    'list_contrasts',
+    {
+      title: 'Listar contrastes entre tópicos',
+      description:
+        'Lista os pares de tópicos que o usuário já marcou como "confundo com", incluindo a ' +
+        'pergunta que decide e os cenários de treino. Use antes de criar um contraste novo, pra ' +
+        'não sobrescrever o que já existe.',
+      inputSchema: {},
+    },
+    async () =>
+      safeCall(async () => {
+        const contrasts = await listContrasts(userId);
+        return JSON.stringify(contrasts, null, 2);
       })
   );
 

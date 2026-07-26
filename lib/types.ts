@@ -111,6 +111,44 @@ export interface NarrationSession {
   created_at: string;
 }
 
+// Um caso concreto onde os dois tópicos do contraste competem, e qual vence.
+// `answer` aponta pro lado canônico (topic_a / topic_b) da linha.
+export interface ContrastScenario {
+  situation: string;
+  answer: 'a' | 'b';
+  why: string;
+}
+
+export interface TopicContrast {
+  id: string;
+  user_id: string;
+  topic_a: string;
+  topic_b: string;
+  confusion: string;
+  decisive_question: string;
+  choose_a_when: string;
+  choose_b_when: string;
+  scenarios: ContrastScenario[];
+  source: 'manual' | 'mcp';
+  created_at: string;
+  updated_at: string;
+}
+
+// O par é guardado em ordem canônica, mas a interface sempre fala da
+// perspectiva do tópico que você está olhando: `this` é ele, `other` é o outro.
+export interface ContrastFromHere {
+  id: string;
+  thisTopicId: string;
+  thisTopicName: string;
+  otherTopicId: string;
+  otherTopicName: string;
+  confusion: string;
+  decisive_question: string;
+  chooseThisWhen: string;
+  chooseOtherWhen: string;
+  scenarios: { situation: string; why: string; answerTopicId: string; answerName: string }[];
+}
+
 export interface ChangelogStep {
   title: string;
   text: string;
