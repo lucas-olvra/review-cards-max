@@ -91,6 +91,14 @@ export interface CreateTopicInput {
   discursive?: DiscursiveInput[];
 }
 
+export interface LanguageItemInput {
+  kind: 'word' | 'frame';
+  term: string;
+  meaning?: string;
+  examples?: string[];
+  category?: string;
+}
+
 export const api = {
   listSections: () =>
     request<{ sections: { id: string; name: string; kind: string; language: string | null }[] }>(
@@ -101,6 +109,15 @@ export const api = {
     request<{ id: string }>('/api/v1/sections', {
       method: 'POST',
       body: JSON.stringify(input),
+    }),
+
+  listLanguageItems: (sectionId: string) =>
+    request<{ items: Record<string, unknown>[] }>(`/api/v1/sections/${sectionId}/language-items`),
+
+  addLanguageItems: (sectionId: string, items: LanguageItemInput[]) =>
+    request<{ inserted: number }>(`/api/v1/sections/${sectionId}/language-items`, {
+      method: 'POST',
+      body: JSON.stringify({ items }),
     }),
 
   listTopics: () => request<{ topics: { id: string; name: string; created_at: string }[] }>('/api/v1/topics'),

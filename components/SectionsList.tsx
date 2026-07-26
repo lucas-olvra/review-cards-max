@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { paletteFor } from '@/lib/palette';
-import type { Section } from '@/lib/types';
+import { LANGUAGE_LABELS } from '@/lib/language/seed';
+import type { Section, SectionKind } from '@/lib/types';
 
 const container = {
   hidden: {},
@@ -17,15 +18,21 @@ const item = {
 
 function SectionCard({ section, index }: { section: Section & { itemsN: number }; index: number }) {
   const p = paletteFor(index);
-  const icon = section.kind === 'language' ? 'ph-fill ph-translate' : p.icon;
-  const itemLabel = section.kind === 'language' ? 'lições' : 'tópicos';
+  const isLanguage = section.kind === 'language';
+  const bg = isLanguage ? '#0BA5EC' : p.bg;
+  const icon = isLanguage ? 'ph-fill ph-translate' : p.icon;
+  const badge = isLanguage
+    ? section.language
+      ? LANGUAGE_LABELS[section.language]
+      : 'Idioma'
+    : `${section.itemsN} tópicos`;
 
   return (
     <motion.div variants={item}>
       <Link
         href={`/sections/${section.id}`}
         className="rcp-topic-card"
-        style={{ background: p.bg, borderColor: p.bg, color: '#fff' }}
+        style={{ background: bg, borderColor: bg, color: '#fff' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div
@@ -61,7 +68,7 @@ function SectionCard({ section, index }: { section: Section & { itemsN: number }
               borderRadius: 999,
             }}
           >
-            {section.itemsN} {itemLabel}
+            {badge}
           </span>
         </div>
       </Link>
@@ -69,51 +76,29 @@ function SectionCard({ section, index }: { section: Section & { itemsN: number }
   );
 }
 
-export function SectionsList({ sections }: { sections: (Section & { itemsN: number })[] }) {
-  const programming = sections.filter((s) => s.kind === 'programming');
-  const language = sections.filter((s) => s.kind === 'language');
-
+export function SectionsList({
+  sections,
+  kind,
+}: {
+  sections: (Section & { itemsN: number })[];
+  kind: SectionKind;
+}) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
-      <div>
-        <h2 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 18, margin: '0 0 14px' }}>
-          Programação
-        </h2>
-        <motion.div
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
-          {programming.map((s, i) => (
-            <SectionCard key={s.id} section={s} index={i} />
-          ))}
-          <Link href="/sections/new?kind=programming" className="rcp-add-card">
-            <div style={{ textAlign: 'center' }}>
-              <i className="ph ph-plus-circle" style={{ fontSize: 30 }} />
-              <div style={{ font: '500 14px var(--font-body)', marginTop: 8 }}>Nova seção</div>
-            </div>
-          </Link>
-        </motion.div>
-      </div>
-
-      {language.length > 0 && (
-        <div>
-          <h2 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 18, margin: '0 0 14px' }}>
-            Idiomas
-          </h2>
-          <motion.div
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            {language.map((s, i) => (
-              <SectionCard key={s.id} section={s} index={i} />
-            ))}
-          </motion.div>
+    <motion.div
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
+      {sections.map((s, i) => (
+        <SectionCard key={s.id} section={s} index={i} />
+      ))}
+      <Link href={`/sections/new?kind=${kind}`} className="rcp-add-card">
+        <div style={{ textAlign: 'center' }}>
+          <i className="ph ph-plus-circle" style={{ fontSize: 30 }} />
+          <div style={{ font: '500 14px var(--font-body)', marginTop: 8 }}>Nova seção</div>
         </div>
-      )}
-    </div>
+      </Link>
+    </motion.div>
   );
 }

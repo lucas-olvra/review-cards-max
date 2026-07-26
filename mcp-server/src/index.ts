@@ -72,6 +72,22 @@ const sectionFieldsShape = {
     .describe('Nome de uma seção — cria automaticamente se não existir ainda. Alternativa ao section_id.'),
 };
 
+// Item de uma seção de idioma. "frame" é um molde de frase com um espaço em
+// branco (o formato que o app treina); "word" é uma palavra ou expressão do
+// núcleo de alta frequência.
+const languageItemShape = z.object({
+  kind: z
+    .enum(['word', 'frame'])
+    .describe('"frame" para molde de frase com ___ no lugar variável; "word" para palavra/expressão'),
+  term: z.string().describe('O molde ("I need to ___") ou a palavra ("deadline")'),
+  meaning: z.string().optional().describe('Tradução ou significado em português'),
+  examples: z
+    .array(z.string())
+    .optional()
+    .describe('Exemplos preenchendo o molde — use preenchimentos bem diferentes entre si, não variações da mesma frase'),
+  category: z.string().optional().describe('Grupo temático, ex: "Trabalho", "Viagem", "Verbos"'),
+});
+
 const topicFieldsShape = {
   concept_what: z.string().optional().describe('O que é o conceito'),
   concept_why: z.string().optional().describe('Por que esse conceito existe'),
@@ -122,6 +138,43 @@ server.registerTool(
   async (input) => {
     const { id } = await api.createSection(input);
     return { content: [{ type: 'text', text: `Seção criada com sucesso. id=${id}` }] };
+  }
+);
+
+server.registerTool(
+  'add_language_items',
+  {
+    title: 'Adicionar moldes e palavras a uma seção de idioma',
+    description:
+      'Adiciona moldes de frase e/ou palavras a uma seção kind="language". O método do app é ' +
+      'frequência e reutilização: prefira moldes com um espaço variável ("I need to ___", ' +
+      '"How do I get to ___?") e palavras de alta frequência que servem de encaixe nesses ' +
+      'moldes — verbos, conectores, tempo e lugar antes de substantivo específico. Evite ' +
+      'vocabulário aleatório e evite explicar regra de gramática por nome; o usuário aprende ' +
+      'a estrutura pelo uso.',
+    inputSchema: {
+      section_id: z.string().describe('ID de uma seção do tipo "language" (use list_sections para achar)'),
+      items: z.array(languageItemShape).describe('Itens a adicionar de uma vez'),
+    },
+  },
+  async ({ section_id, items }) => {
+    const { inserted } = await api.addLanguageItems(section_id, items);
+    return { content: [{ type: 'text', text: `${inserted} item(ns) adicionado(s) à seção de idioma.` }] };
+  }
+);
+
+server.registerTool(
+  'list_language_items',
+  {
+    title: 'Listar moldes e palavras de uma seção de idioma',
+    description:
+      'Lista o que o usuário já tem numa seção de idioma — use antes de adicionar, pra não repetir ' +
+      'moldes ou palavras que já existem. Não inclui o plano curado que já vem no app.',
+    inputSchema: { section_id: z.string().describe('ID da seção de idioma') },
+  },
+  async ({ section_id }) => {
+    const { items } = await api.listLanguageItems(section_id);
+    return { content: [{ type: 'text', text: JSON.stringify(items, null, 2) }] };
   }
 );
 

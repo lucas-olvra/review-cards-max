@@ -85,6 +85,32 @@ export interface TopicWithChildren extends Topic {
   discursive_questions: DiscursiveQuestion[];
 }
 
+export type LanguageItemKind = 'word' | 'frame';
+
+export interface LanguageItem {
+  id: string;
+  user_id: string;
+  section_id: string;
+  kind: LanguageItemKind;
+  term: string;
+  meaning: string;
+  examples: string[];
+  category: string;
+  source: 'manual' | 'mcp';
+  created_at: string;
+}
+
+export interface NarrationSession {
+  id: string;
+  user_id: string;
+  section_id: string;
+  prompt: string;
+  duration_seconds: number;
+  audio_path: string | null;
+  notes: string;
+  created_at: string;
+}
+
 export interface ChangelogStep {
   title: string;
   text: string;
