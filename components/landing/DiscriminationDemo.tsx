@@ -8,30 +8,34 @@ const DRILL = '#7C3AED';
 // O treino de discriminação de verdade, jogável na home. É a demo mais
 // importante da página: ler "treina escolha sob pressão" não convence
 // ninguém — errar uma pergunta que você achava que sabia, convence.
-// O terceiro caso é a armadilha de propósito: quem vem respondendo "enum"
-// no automático erra, porque ali nem se trata de constante.
+//
+// Os três casos são de áreas propositalmente distantes (banco, versionamento,
+// layout) pra deixar claro que o app não é de uma linguagem só. Cada par tem
+// a própria pergunta decisiva, porque é ela — e não a definição — que é o
+// ativo que o app guarda.
 const QUESTIONS = [
   {
-    situation: 'Seu método recebe o status do pedido como int e alguém passou 7, que não existe. Só descobriu em produção.',
-    options: ['enum', 'static final'],
+    situation: 'Seu relatório precisa descartar os pedidos cancelados antes de somar o total por cliente.',
+    options: ['WHERE', 'HAVING'],
     correct: 0,
-    why: 'O conjunto é fechado e conhecido. Com um tipo próprio, o 7 nunca teria compilado.',
+    why: 'O corte acontece linha a linha, antes de os grupos existirem. HAVING só consegue agir depois do agrupamento.',
+    decisive: 'O filtro precisa acontecer antes ou depois do agrupamento?',
   },
   {
-    situation: 'Você precisa fixar em 3 o número máximo de tentativas de reconexão, e esse número não tem irmãos.',
-    options: ['enum', 'static final'],
-    correct: 1,
-    why: 'Valor solto, sem conjunto. Não há o que o compilador confira além de a variável não ser reatribuída.',
+    situation: 'Sua branch já foi enviada e outras duas pessoas puxaram ela pra trabalhar em cima.',
+    options: ['merge', 'rebase'],
+    correct: 0,
+    why: 'Rebase reescreve o histórico. Com a branch já compartilhada, você quebra os commits que os outros já baixaram.',
+    decisive: 'Alguém além de você já depende desses commits?',
   },
   {
-    situation: 'Uma dependência injetada no construtor que nunca mais pode trocar de objeto depois.',
-    options: ['enum', 'static final'],
-    correct: 1,
-    why: 'Pegadinha: aqui nem é sobre constante. É sobre a referência não trocar de objeto — não existe conjunto de irmãos.',
+    situation: 'Você precisa alinhar três botões numa linha, com espaçamento igual entre eles.',
+    options: ['flex', 'grid'],
+    correct: 0,
+    why: 'Uma direção só, e o conteúdo mandando no tamanho. Grid começa a valer quando você define linhas e colunas ao mesmo tempo.',
+    decisive: 'Você está posicionando em uma direção ou nas duas ao mesmo tempo?',
   },
 ];
-
-const DECISIVE = 'Esse valor tem irmãos? Consigo listar todos e seria bug receber um fora da lista?';
 
 export function DiscriminationDemo() {
   const [idx, setIdx] = useState(0);
@@ -158,7 +162,7 @@ export function DiscriminationDemo() {
                 <span style={{ display: 'block', font: '600 11px var(--font-body)', letterSpacing: '.05em', textTransform: 'uppercase', color: DRILL, marginBottom: 3 }}>
                   A pergunta que decide
                 </span>
-                <span style={{ fontSize: 14, lineHeight: 1.5, color: '#35322D' }}>{DECISIVE}</span>
+                <span style={{ fontSize: 14, lineHeight: 1.5, color: '#35322D' }}>{q.decisive}</span>
               </div>
             </div>
 

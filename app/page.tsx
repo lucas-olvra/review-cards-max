@@ -116,8 +116,13 @@ export default async function Home() {
               e você tem que decidir.
             </p>
             <p className="rcp-lp-lead" style={{ marginTop: 14 }}>
-              <b style={{ color: '#161616' }}>Jogue os três casos ao lado.</b> São Java de verdade, e o terceiro
-              costuma pegar mesmo quem domina os dois conceitos.
+              <b style={{ color: '#161616' }}>Jogue os três casos ao lado</b> — banco de dados, versionamento e
+              layout. Você provavelmente sabe explicar os seis conceitos envolvidos. Escolher entre eles é outra
+              conversa.
+            </p>
+            <p className="rcp-lp-lead" style={{ marginTop: 14 }}>
+              Funciona pra qualquer par que você troca na hora errada, em qualquer assunto: você liga os dois
+              tópicos, guarda a pergunta que decide e o app te cobra ela sem aviso depois.
             </p>
           </div>
           <DiscriminationDemo />
@@ -130,9 +135,32 @@ export default async function Home() {
           <p className="rcp-lp-kicker">Um tópico, sete estágios</p>
           <h2 className="rcp-lp-h2">Do conceito até você explicando em 30 segundos.</h2>
           <p className="rcp-lp-lead">
-            Cada tópico percorre o mesmo caminho — e o caminho termina em produção, não em leitura. Clique nos
-            estágios para ver o que cada um guarda.
+            O ciclo é o mesmo para qualquer assunto — e termina em produção, não em leitura. Clique nos estágios
+            para ver o que cada um guarda.
           </p>
+
+          {/* Faixa de assuntos: a forma mais rápida de dizer "não é um app de
+              uma linguagem só" sem gastar um parágrafo com isso. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, margin: '20px 0 0' }}>
+            {['SQL', 'Git', 'Python', 'React', 'Java', 'CSS', 'Docker', 'Redes', 'Arquitetura', 'Estrutura de dados', 'Segurança', 'Cloud', 'Estatística', 'Inglês', 'Espanhol'].map((s) => (
+              <span
+                key={s}
+                style={{
+                  font: '500 12.5px var(--font-body)',
+                  color: '#55524B',
+                  background: '#fff',
+                  border: '1px solid rgba(0,0,0,.08)',
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                }}
+              >
+                {s}
+              </span>
+            ))}
+            <span style={{ font: '500 12.5px var(--font-body)', color: '#A29E96', padding: '6px 4px' }}>
+              e o que mais você estiver estudando
+            </span>
+          </div>
           <div style={{ marginTop: 30 }}>
             <CycleExplorer />
           </div>
@@ -177,6 +205,26 @@ export default async function Home() {
               minutos por dia descrevendo o que você está fazendo, errado mesmo, gravando. É produção em tempo real
               — o único jeito de treinar velocidade.
             </p>
+            <p className="rcp-lp-lead" style={{ marginTop: 14 }}>
+              <b style={{ color: '#161616' }}>Inglês já vem com o plano montado.</b> Espanhol, francês, italiano e
+              alemão seguem o mesmo método — você monta os moldes na mão ou pede pra IA gerar o bloco inteiro.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 18 }}>
+              {['Inglês', 'Espanhol', 'Francês', 'Italiano', 'Alemão'].map((l) => (
+                <span
+                  key={l}
+                  style={{
+                    font: '500 12.5px var(--font-body)',
+                    color: '#0369A1',
+                    background: '#E0F2FE',
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                  }}
+                >
+                  {l}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -190,7 +238,8 @@ export default async function Home() {
             <p className="rcp-lp-lead">
               Conecte seu assistente de IA ao app pelo MCP e peça em português. Ele preenche os sete estágios,
               escreve os cartões, monta a analogia e liga os tópicos que se confundem — direto na seção que você
-              está estudando.
+              está estudando. Em seções de idioma vale o mesmo: você pede um bloco de moldes e palavras de um
+              tema e ele entra pronto.
             </p>
             <p className="rcp-lp-lead" style={{ marginTop: 14 }}>
               Você continua dono de tudo: edita, apaga e escreve por cima quando quiser.

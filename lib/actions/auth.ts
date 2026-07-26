@@ -35,5 +35,8 @@ export async function signUp(formData: FormData) {
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect('/login');
+  // Volta pra home, não pro login: quem saiu não necessariamente quer entrar
+  // de novo agora, e a home é a página que apresenta o app. O botão "Entrar"
+  // fica lá no topo pra quem só trocou de conta.
+  redirect('/');
 }

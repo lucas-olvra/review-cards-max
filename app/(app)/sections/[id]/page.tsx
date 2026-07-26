@@ -85,6 +85,8 @@ export default async function SectionPage({ params }: { params: Promise<{ id: st
       {isLanguage ? (
         <LanguageHub
           sectionId={section.id}
+          sectionName={section.name}
+          languageLabel={section.language ? LANGUAGE_LABELS[section.language] : 'idioma'}
           frames={frames}
           masteredKeys={masteredKeys}
           groups={plan.groups}

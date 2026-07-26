@@ -7,28 +7,34 @@ import { STAGE_DEFS } from '@/lib/stages';
 // Mostra o ciclo clicando, não descrevendo: cada estágio traz um trecho real
 // de um tópico já preenchido. As chaves espelham STAGE_DEFS pra ordem e cor
 // virem da mesma fonte que a página do tópico usa.
+//
+// O exemplo é índice de banco de propósito: é um assunto que quase todo mundo
+// que programa reconhece, independente de linguagem ou stack — a página não
+// deve dar a impressão de que o app é de uma tecnologia só.
+const TOPIC_NAME = 'Índice em banco de dados';
+
 const SAMPLE: Record<string, { text: string; code?: boolean }> = {
   concept_what: {
-    text: 'Uma variável `final` de referência trava o endereço guardado nela: ela sempre vai apontar para o mesmo objeto.',
+    text: 'Uma estrutura paralela à tabela que guarda os valores de uma coluna já ordenados, com um ponteiro para a linha. O banco consulta ela em vez de varrer a tabela inteira.',
   },
   concept_why: {
-    text: 'Existe para garantir que uma variável nunca "troque de objeto" depois de criada — útil para dependências que não podem ser substituídas no meio da execução.',
+    text: 'Existe porque varrer milhões de linhas para achar dez é desperdício. O índice troca espaço em disco e custo de escrita por velocidade de leitura.',
   },
   code: {
-    text: 'final List<String> lista = new ArrayList<>();\nlista.add("ok");      // permitido\nlista = new ArrayList<>(); // erro de compilação',
+    text: 'CREATE INDEX idx_pedidos_cliente\n  ON pedidos (cliente_id);\n\n-- agora esta busca não varre a tabela inteira\nSELECT * FROM pedidos WHERE cliente_id = 42;',
     code: true,
   },
   use_cases: {
-    text: '• Constantes que guardam objetos\n• Variáveis capturadas por lambdas\n• Dependências injetadas no construtor',
+    text: '• Colunas usadas em WHERE, JOIN e ORDER BY\n• Chaves estrangeiras muito consultadas\n• Tabelas grandes com muito mais leitura do que escrita',
   },
   anti_patterns: {
-    text: '`final` não torna o objeto imutável. Se você precisa de imutabilidade real, o objeto inteiro precisa ser imutável — não basta travar a referência.',
+    text: 'Tabela que recebe escrita o tempo todo: cada INSERT precisa atualizar todo índice existente. Em coluna com pouquíssimos valores distintos (um campo "ativo" só com sim/não), o banco costuma ignorar o índice e varrer mesmo assim.',
   },
   common_mistakes: {
-    text: 'Achar que `final List<String> lista` impede `lista.add()`. Não impede: a referência é fixa, o conteúdo não.',
+    text: 'Criar índice em toda coluna "por garantia" e deixar a escrita lenta. Ou criar um índice composto e esperar que ele sirva para qualquer ordem de colunas — a ordem definida importa.',
   },
   exercise_prompt: {
-    text: 'Crie uma ContaBancaria com `final String titular` e `double saldo`. Tente reatribuir o titular e veja o erro.',
+    text: 'Rode um EXPLAIN numa busca por coluna sem índice e anote o plano. Crie o índice, rode de novo e compare o que mudou.',
   },
 };
 
@@ -68,6 +74,9 @@ export function CycleExplorer() {
           </span>
           <span className="rcp-font-display" style={{ fontWeight: 600, fontSize: 18 }}>
             {stage.title}
+          </span>
+          <span style={{ marginLeft: 'auto', font: '500 12.5px var(--font-body)', color: '#A29E96', textAlign: 'right' }}>
+            {TOPIC_NAME}
           </span>
         </div>
 
