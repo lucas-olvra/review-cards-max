@@ -8,7 +8,17 @@ import { accent } from '@/lib/ui';
 // Explicação de uma frase sobre pedir conteúdo pra IA. Quem já usa MCP resolve
 // aqui mesmo; quem não entendeu cai na página de Tokens & MCP, que tem o
 // passo a passo completo de configuração.
-export function McpHint({ example }: { example: string }) {
+export function McpHint({
+  example,
+  label = 'Pedir pra IA',
+  title = 'Conecte seu assistente e peça',
+  body = 'Com o MCP ligado, você pede em linguagem natural e o conteúdo entra direto nesta seção.',
+}: {
+  example: string;
+  label?: string;
+  title?: string;
+  body?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -19,7 +29,7 @@ export function McpHint({ example }: { example: string }) {
         className="rcp-pill-btn"
         style={{ background: '#E9ECFF', color: accent, display: 'inline-flex', alignItems: 'center', gap: 5 }}
       >
-        <i className="ph-fill ph-robot" style={{ fontSize: 13 }} /> Pedir pra IA
+        <i className="ph-fill ph-robot" style={{ fontSize: 13 }} /> {label}
       </button>
 
       <AnimatePresence>
@@ -47,10 +57,10 @@ export function McpHint({ example }: { example: string }) {
               }}
             >
               <span style={{ display: 'block', font: '600 13.5px var(--font-body)', marginBottom: 6 }}>
-                Conecte seu assistente e peça
+                {title}
               </span>
               <span style={{ display: 'block', fontSize: 13, color: '#6B6862', lineHeight: 1.55, marginBottom: 10 }}>
-                Com o MCP ligado, você pede em linguagem natural e o conteúdo entra direto nesta seção.
+                {body}
               </span>
               <code
                 className="rcp-font-code"
