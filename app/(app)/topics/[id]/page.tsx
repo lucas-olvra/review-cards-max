@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTopic, getTopics, updateTopicPanel, deleteTopic } from '@/lib/actions/topics';
+import { getContrastCandidates, getContrastsForTopic } from '@/lib/actions/contrasts';
+import { ContrastPanel } from '@/components/ContrastPanel';
 import { EditablePanel } from '@/components/EditablePanel';
 import { AnalogyPanel } from '@/components/AnalogyPanel';
 import { CardsSection } from '@/components/CardsSection';
@@ -20,6 +22,11 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
   const topics = await getTopics(topic.section_id);
   const idx = topics.findIndex((t) => t.id === id);
   const palette = paletteFor(idx < 0 ? 0 : idx);
+
+  const [contrasts, candidates] = await Promise.all([
+    getContrastsForTopic(id),
+    getContrastCandidates(id, topic.section_id),
+  ]);
 
   return (
     <div style={{ maxWidth: 840, margin: '0 auto', padding: '26px 26px 90px' }}>
@@ -85,6 +92,18 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
           ]}
           action={updateTopicPanel.bind(null, topic.id, ['exercise_prompt', 'exercise_solution'])}
           emptyLabel="+ Prática"
+        />
+      </div>
+
+      {/* Logo depois de "Onde não usar": é a continuação natural dela — lá você
+          diz que não serve, aqui você diz o que usa no lugar e por quê. */}
+      <div style={{ margin: '26px 0 0' }}>
+        <ContrastPanel
+          topicId={topic.id}
+          topicName={topic.name}
+          sectionId={topic.section_id}
+          contrasts={contrasts}
+          candidates={candidates}
         />
       </div>
 

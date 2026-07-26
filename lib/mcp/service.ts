@@ -185,6 +185,101 @@ export async function addLanguageItems(userId: string, sectionId: string, items:
   return { inserted: data?.length ?? 0 };
 }
 
+export interface ContrastScenarioInput {
+  situation: string;
+  answer_topic: string;
+  why?: string;
+}
+
+export interface ContrastInput {
+  topic_a: string;
+  topic_b: string;
+  confusion?: string;
+  decisive_question?: string;
+  choose_a_when?: string;
+  choose_b_when?: string;
+  scenarios?: ContrastScenarioInput[];
+}
+
+// Espelha canonicalPair de lib/actions/contrasts.ts: o banco tem check
+// (topic_a < topic_b) + índice único no par, então quem escreve precisa
+// ordenar antes — e inverter os campos "a"/"b" junto quando a ordem virar.
+function canonicalPair(x: string, y: string) {
+  return x < y
+    ? { topic_a: x, topic_b: y, swapped: false }
+    : { topic_a: y, topic_b: x, swapped: true };
+}
+
+export async function listContrasts(userId: string) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('topic_contrasts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+
+  const ids = [...new Set((data ?? []).flatMap((r) => [r.topic_a, r.topic_b]))];
+  const { data: topics } = await supabase.from('topics').select('id, name').in('id', ids);
+  const names = new Map((topics ?? []).map((t) => [t.id as string, t.name as string]));
+
+  return (data ?? []).map((r) => ({
+    ...r,
+    topic_a_name: names.get(r.topic_a) ?? '',
+    topic_b_name: names.get(r.topic_b) ?? '',
+  }));
+}
+
+export async function setTopicContrast(userId: string, input: ContrastInput) {
+  if (!input.topic_a || !input.topic_b) {
+    throw new ValidationError('Os campos "topic_a" e "topic_b" são obrigatórios.');
+  }
+  if (input.topic_a === input.topic_b) {
+    throw new ValidationError('Um contraste precisa ligar dois tópicos diferentes.');
+  }
+
+  const supabase = createAdminClient();
+  await getOwnedTopic(supabase, input.topic_a, userId);
+  await getOwnedTopic(supabase, input.topic_b, userId);
+
+  const { topic_a, topic_b, swapped } = canonicalPair(input.topic_a, input.topic_b);
+
+  const scenarios = (input.scenarios ?? []).map((s) => {
+    if (!s.situation?.trim()) throw new ValidationError('Todo cenário precisa de "situation".');
+    if (s.answer_topic !== input.topic_a && s.answer_topic !== input.topic_b) {
+      throw new ValidationError('"answer_topic" precisa ser um dos dois tópicos do contraste.');
+    }
+    return {
+      situation: s.situation.trim(),
+      answer: s.answer_topic === topic_a ? 'a' : 'b',
+      why: s.why ?? '',
+    };
+  });
+
+  const { data, error } = await supabase
+    .from('topic_contrasts')
+    .upsert(
+      {
+        user_id: userId,
+        topic_a,
+        topic_b,
+        confusion: input.confusion ?? '',
+        decisive_question: input.decisive_question ?? '',
+        choose_a_when: swapped ? (input.choose_b_when ?? '') : (input.choose_a_when ?? ''),
+        choose_b_when: swapped ? (input.choose_a_when ?? '') : (input.choose_b_when ?? ''),
+        scenarios,
+        source: 'mcp',
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'topic_a,topic_b' }
+    )
+    .select('id')
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? 'Falha ao salvar contraste.');
+  return { id: data.id as string, scenarios: scenarios.length };
+}
+
 async function getOrCreateSectionByName(
   supabase: ReturnType<typeof createAdminClient>,
   userId: string,
