@@ -2,6 +2,7 @@ import type { NarrationSession } from '@/lib/types';
 
 export interface NarrationStats {
   totalSessions: number;
+  totalSeconds: number;
   totalMinutes: number;
   streakDays: number;
   narratedToday: boolean;
@@ -26,6 +27,7 @@ export function computeNarrationStats(sessions: NarrationSession[]): NarrationSt
 
   return {
     totalSessions: sessions.length,
+    totalSeconds,
     totalMinutes: Math.round(totalSeconds / 60),
     streakDays: streak,
     narratedToday: days.has(today),

@@ -35,10 +35,13 @@ export function McpHint({ example }: { example: string }) {
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 8px)',
-                left: 0,
+                // Ancorado à direita porque o botão fica sempre no fim da
+                // linha — abrir pela esquerda estouraria a borda da viewport
+                // e criaria scroll horizontal na página inteira.
+                right: 0,
                 zIndex: 40,
                 width: 290,
-                maxWidth: '80vw',
+                maxWidth: 'min(290px, calc(100vw - 52px))',
                 padding: 15,
                 display: 'block',
               }}

@@ -101,7 +101,8 @@ export function WordsPanel({
         />
         <p style={{ fontSize: 12.5, color: '#86827A', margin: '8px 0 0' }}>
           {totalSeedWords + userWords.length} palavras no total
-          {userWords.length > 0 && ` — ${userWords.length} adicionadas por você`}
+          {userWords.length > 0 &&
+            ` — ${userWords.length} ${userWords.length === 1 ? 'adicionada' : 'adicionadas'} por você`}
         </p>
       </div>
 

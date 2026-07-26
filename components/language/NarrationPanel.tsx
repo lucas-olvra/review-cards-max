@@ -13,6 +13,13 @@ function formatDuration(seconds: number) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+// Abaixo de um minuto arredondaria pra "0 min" e a primeira sessão pareceria
+// não ter contado — nesse caso mostra segundos.
+function formatTotal(stats: NarrationStats) {
+  if (stats.totalMinutes > 0) return `${stats.totalMinutes} min`;
+  return `${stats.totalSeconds}s`;
+}
+
 function StatTile({ icon, color, tint, value, label }: { icon: string; color: string; tint: string; value: string; label: string }) {
   return (
     <div className="rcp-card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -128,8 +135,8 @@ export function NarrationPanel({
           value={`${stats.streakDays}`}
           label={stats.streakDays === 1 ? 'dia seguido' : 'dias seguidos'}
         />
-        <StatTile icon="ph-fill ph-timer" color={accent} tint="#E9ECFF" value={`${stats.totalMinutes} min`} label="narrados no total" />
-        <StatTile icon="ph-fill ph-waveform" color="#12B76A" tint="#DFF7EB" value={`${stats.totalSessions}`} label="sessões gravadas" />
+        <StatTile icon="ph-fill ph-timer" color={accent} tint="#E9ECFF" value={formatTotal(stats)} label="narrados no total" />
+        <StatTile icon="ph-fill ph-waveform" color="#12B76A" tint="#DFF7EB" value={`${stats.totalSessions}`} label="sessões narradas" />
       </div>
 
       {sessions.length === 0 ? (
@@ -143,7 +150,7 @@ export function NarrationPanel({
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <h4 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 15.5, margin: '6px 0 0' }}>
-            Suas gravações
+            Suas sessões
           </h4>
           {sessions.map((s) => (
             <SessionRow key={s.id} session={s} sectionId={sectionId} />
