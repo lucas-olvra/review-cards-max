@@ -136,6 +136,55 @@ export async function createSection(userId: string, input: SectionInput) {
   return { id: data.id as string };
 }
 
+export interface LanguageItemInput {
+  kind: 'word' | 'frame';
+  term: string;
+  meaning?: string;
+  examples?: string[];
+  category?: string;
+}
+
+export async function listLanguageItems(userId: string, sectionId: string) {
+  const supabase = createAdminClient();
+  await getOwnedSection(supabase, sectionId, userId);
+
+  const { data, error } = await supabase
+    .from('language_items')
+    .select('id, kind, term, meaning, examples, category, source, created_at')
+    .eq('section_id', sectionId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function addLanguageItems(userId: string, sectionId: string, items: LanguageItemInput[]) {
+  if (!items?.length) throw new ValidationError('Informe pelo menos um item em "items".');
+
+  const supabase = createAdminClient();
+  const section = await getOwnedSection(supabase, sectionId, userId);
+  if (section.kind !== 'language') {
+    throw new ValidationError('section_id precisa apontar para uma seção do tipo "language".');
+  }
+
+  const rows = items.map((item) => {
+    if (!item.term?.trim()) throw new ValidationError('Todo item precisa de "term".');
+    return {
+      user_id: userId,
+      section_id: sectionId,
+      kind: item.kind,
+      term: item.term.trim(),
+      meaning: item.meaning ?? '',
+      examples: item.examples ?? [],
+      category: item.category ?? '',
+      source: 'mcp',
+    };
+  });
+
+  const { data, error } = await supabase.from('language_items').insert(rows).select('id');
+  if (error) throw new Error(error.message);
+  return { inserted: data?.length ?? 0 };
+}
+
 async function getOrCreateSectionByName(
   supabase: ReturnType<typeof createAdminClient>,
   userId: string,
