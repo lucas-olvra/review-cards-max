@@ -397,9 +397,12 @@ export function ContrastPanel({
 
       {contrasts.length === 0 && !creating ? (
         <div className="rcp-card" style={{ padding: '22px 20px' }}>
+          {/* Sem interpolar o nome do tópico no meio da frase: nomes longos
+              ("Modificador `final` em Variáveis de Referência") quebram a
+              leitura em qualquer construção do tipo "você sabe o que X é". */}
           <p style={{ fontSize: 14.5, color: '#6B6862', lineHeight: 1.6, margin: 0 }}>
-            Você sabe o que <b>{topicName}</b> é. A pergunta que trava na hora de escrever código é outra:{' '}
-            <b>por que este e não aquele?</b> Ligue este tópico ao que você confunde com ele e guarde a pergunta que decide.
+            Você já sabe o que este tópico é. O que trava na hora de escrever código é outra pergunta:{' '}
+            <b>por que este e não aquele?</b> Ligue-o ao tópico que você troca com ele e guarde a pergunta que decide.
           </p>
         </div>
       ) : (
