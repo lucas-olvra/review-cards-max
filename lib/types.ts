@@ -26,6 +26,12 @@ export interface AnalogyStroke {
   width: number;
 }
 
+// Cena do Excalidraw persistida em topics.analogy_scene. Deliberadamente
+// opaca aqui: os tipos de elemento do Excalidraw são grandes e mudam entre
+// versões, e este arquivo é importado por código de servidor que não deve
+// arrastar o pacote junto. O componente que edita a cena faz o cast.
+export type AnalogyScene = unknown[];
+
 export type SectionKind = 'programming' | 'language';
 export type LanguageCode = 'en' | 'es' | 'fr' | 'it' | 'de';
 
@@ -54,7 +60,9 @@ export interface Topic {
   pitch: string;
   analogy_caption: string;
   analogy_diagram: AnalogyDiagram;
+  /** @deprecated desde a migration 0011 — convertido para `analogy_scene` na primeira abertura. */
   analogy_drawing: AnalogyStroke[];
+  analogy_scene: AnalogyScene;
   created_at: string;
   updated_at: string;
 }

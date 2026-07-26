@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { AnalogyStroke, Card, DiscursiveQuestion, Topic, TopicWithChildren } from '@/lib/types';
+import type { AnalogyScene, Card, DiscursiveQuestion, Topic, TopicWithChildren } from '@/lib/types';
 
 export async function getTopics(sectionId: string): Promise<Topic[]> {
   const supabase = await createClient();
@@ -124,11 +124,13 @@ export async function updateTopicPanel(
   revalidatePath(`/topics/${topicId}`);
 }
 
-// Salva o desenho livre do usuário (traços do canvas de analogia). Separado de
-// updateTopicPanel porque o payload é um array JSON de traços, não FormData.
-export async function updateTopicAnalogyDrawing(topicId: string, strokes: AnalogyStroke[]) {
+// Salva a cena do Excalidraw editada pelo usuário. Separado de
+// updateTopicPanel porque o payload é um array JSON, não FormData — e
+// separado de `analogy_diagram` de propósito: pedir uma analogia nova pra IA
+// não pode apagar o desenho do usuário.
+export async function updateTopicAnalogyScene(topicId: string, scene: AnalogyScene) {
   const supabase = await createClient();
-  const { error } = await supabase.from('topics').update({ analogy_drawing: strokes }).eq('id', topicId);
+  const { error } = await supabase.from('topics').update({ analogy_scene: scene }).eq('id', topicId);
   if (error) throw error;
   revalidatePath(`/topics/${topicId}`);
 }

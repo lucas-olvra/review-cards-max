@@ -1,8 +1,8 @@
 import type { AnalogyDiagram, AnalogyShape } from '@/lib/types';
 
-// Plano de coordenadas de referência que a IA usa para posicionar as formas.
-// O canvas de desenho livre (AnalogyCanvas) continua fixo neste tamanho; o
-// diagrama, não — ele se ajusta ao conteúdo (ver `bounds` abaixo).
+// Plano de coordenadas de referência que a IA usa para posicionar as formas,
+// e tamanho mínimo da visão. O diagrama não fica preso a ele: se o conteúdo
+// passar disso, o viewBox cresce junto em vez de cortar.
 export const DIAGRAM_VIEW_W = 400;
 export const DIAGRAM_VIEW_H = 240;
 

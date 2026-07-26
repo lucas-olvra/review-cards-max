@@ -1,6 +1,6 @@
 import { DiagramSvg } from '@/lib/diagram';
 import { RichText } from '@/lib/render';
-import { AnalogyCanvas } from '@/components/AnalogyCanvas';
+import { AnalogyStudio } from '@/components/AnalogyStudio';
 import type { Topic } from '@/lib/types';
 
 const COLOR = '#0BA5EC';
@@ -57,8 +57,22 @@ export function AnalogyPanel({ topic }: { topic: Topic }) {
 
         <p className="rcp-label" style={{ marginBottom: 8 }}>
           Seu desenho
+          {hasDiagram && (
+            <span style={{ fontWeight: 400, color: '#86827A' }}>
+              {' '}
+              — copie o diagrama acima pra cá e refaça do seu jeito
+            </span>
+          )}
         </p>
-        <AnalogyCanvas topicId={topic.id} initialStrokes={topic.analogy_drawing} />
+        {/* `?? []` porque `analogy_scene` só existe a partir da migration 0011:
+            sem o fallback, abrir um tópico com o código novo e o banco antigo
+            quebraria a página inteira em vez de só não ter desenho. */}
+        <AnalogyStudio
+          topicId={topic.id}
+          diagram={topic.analogy_diagram}
+          initialScene={topic.analogy_scene ?? []}
+          legacyStrokes={topic.analogy_drawing ?? []}
+        />
       </div>
     </div>
   );
