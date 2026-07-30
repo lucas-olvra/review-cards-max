@@ -9,6 +9,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  // Um `code` do Supabase pode cair na home em vez de /auth/callback: quando o
+  // `redirect_to` não está nas Redirect URLs do projeto, o Supabase descarta o
+  // destino pedido e usa o Site URL — e os links de confirmação de e-mail usam
+  // o Site URL por padrão. Sem isso a home simplesmente ignora o código e o
+  // login parece ter falhado sem motivo. Só o pathname muda, então o `code`
+  // segue junto na query.
+  if (request.nextUrl.pathname === '/' && request.nextUrl.searchParams.has('code')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/callback';
+    return NextResponse.redirect(url);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
