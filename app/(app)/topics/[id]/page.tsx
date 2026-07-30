@@ -13,6 +13,7 @@ import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
 import { buttonDangerClass } from '@/lib/ui';
 import { SIMPLE_STAGE_DEFS, PRACTICE_STAGE_DEF } from '@/lib/stages';
 import { paletteFor } from '@/lib/palette';
+import { withFrom } from '@/lib/nav';
 
 export default async function TopicPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -96,8 +97,10 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* Logo depois de "Onde não usar": é a continuação natural dela — lá você
-          diz que não serve, aqui você diz o que usa no lugar e por quê. */}
-      <div style={{ margin: '26px 0 0' }}>
+          diz que não serve, aqui você diz o que usa no lugar e por quê.
+          Os `id` daqui em diante são o alvo do "voltar pra onde parou" das telas
+          de execução: elas recebem a âncora em `?from=`. */}
+      <div id="confundo-com" style={{ margin: '26px 0 0' }}>
         <ContrastPanel
           topicId={topic.id}
           topicName={topic.name}
@@ -107,11 +110,11 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
         />
       </div>
 
-      <div style={{ margin: '26px 0 0' }}>
+      <div id="cartoes" style={{ margin: '26px 0 0' }}>
         <CardsSection topicId={topic.id} cards={topic.cards} />
       </div>
 
-      <div style={{ margin: '26px 0 0' }}>
+      <div id="discursivas" style={{ margin: '26px 0 0' }}>
         <DiscursiveSection topicId={topic.id} items={topic.discursive_questions} />
       </div>
 
@@ -120,6 +123,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div
+        id="pitch"
         style={{
           margin: '26px 0 0',
           background: 'linear-gradient(120deg, #FB6514, #F5A524)',
@@ -156,7 +160,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
         <Link
-          href={`/topics/${topic.id}/pitch`}
+          href={withFrom(`/topics/${topic.id}/pitch`, `/topics/${topic.id}#pitch`)}
           className="rcp-btn-secondary"
           style={{ flex: 'none', border: 'none', color: '#C2410C', background: '#fff', fontWeight: 700 }}
         >

@@ -36,6 +36,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // /auth/callback é o retorno do OAuth e do link de confirmação de e-mail:
+  // chega sem sessão por definição (a sessão só nasce quando o handler troca o
+  // `code`), então não pode cair na regra de "sem usuário → /login".
+  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/');
+
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/signup');
 
@@ -45,7 +50,7 @@ export async function updateSession(request: NextRequest) {
   // e o logo do header mandam direto pra /sections.
   const isPublicRoute = request.nextUrl.pathname === '/';
 
-  if (!user && !isAuthRoute && !isPublicRoute) {
+  if (!user && !isAuthRoute && !isPublicRoute && !isAuthCallback) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

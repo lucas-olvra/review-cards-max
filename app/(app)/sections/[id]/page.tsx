@@ -5,7 +5,7 @@ import { getTopicsWithCounts } from '@/lib/actions/topics';
 import { countSectionDrill } from '@/lib/actions/contrasts';
 import { getLanguageItems, getMasteredKeys, getNarrationSessions } from '@/lib/actions/language';
 import { TopicsList } from '@/components/TopicsList';
-import { LanguageHub } from '@/components/language/LanguageHub';
+import { LanguageHub, parseTab } from '@/components/language/LanguageHub';
 import { type FrameEntry } from '@/components/language/FramesPanel';
 import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
 import { McpHint } from '@/components/McpHint';
@@ -13,8 +13,15 @@ import { LANGUAGE_LABELS, countSeedWords, planFor } from '@/lib/language/seed';
 import { computeNarrationStats } from '@/lib/language/stats';
 import { buttonDangerClass } from '@/lib/ui';
 
-export default async function SectionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SectionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { id } = await params;
+  const { tab } = await searchParams;
   const section = await getSection(id);
   if (!section) notFound();
 
@@ -94,6 +101,7 @@ export default async function SectionPage({ params }: { params: Promise<{ id: st
           totalSeedWords={countSeedWords(plan)}
           sessions={sessions}
           stats={computeNarrationStats(sessions)}
+          initialTab={parseTab(tab)}
         />
       ) : (
         <>

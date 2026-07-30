@@ -1,20 +1,15 @@
+import { SkeletonBlock, SkeletonPage, SkeletonRows } from '@/components/Skeleton';
+
 export default function TopicLoading() {
   return (
-    <div className="animate-pulse" style={{ maxWidth: 840, margin: '0 auto', padding: '26px 26px 90px' }}>
-      <div style={{ marginBottom: 20, height: 16, width: 120, borderRadius: 6, background: '#EFEDE6' }} />
-      <div style={{ marginBottom: 24, height: 32, width: '60%', borderRadius: 8, background: '#EFEDE6' }} />
-      {[0, 1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          style={{
-            marginBottom: 14,
-            height: 88,
-            borderRadius: 18,
-            background: '#fff',
-            border: '1.5px solid rgba(0,0,0,.07)',
-          }}
-        />
-      ))}
-    </div>
+    <SkeletonPage>
+      <SkeletonBlock height={16} width={120} radius={6} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <SkeletonBlock height={48} width={48} radius={13} />
+        <SkeletonBlock height={32} width="55%" radius={8} />
+      </div>
+      <SkeletonBlock height={42} radius={999} style={{ marginTop: 8 }} />
+      <SkeletonRows count={5} height={88} />
+    </SkeletonPage>
   );
 }

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Space_Grotesk, Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import { RouteProgress } from "@/components/RouteProgress";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -45,7 +47,14 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
         <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Suspense porque RouteProgress lê useSearchParams: sem o limite, a
+            leitura obrigaria toda página a virar renderização dinâmica. */}
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

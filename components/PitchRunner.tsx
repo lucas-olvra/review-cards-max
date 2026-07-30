@@ -10,13 +10,13 @@ const DURATION = 30;
 const CIRCUMFERENCE = 2 * Math.PI * 88;
 
 export function PitchRunner({
-  topicId,
   topicName,
   pitch,
+  backHref,
 }: {
-  topicId: string;
   topicName: string;
   pitch: string;
+  backHref: string;
 }) {
   const [phase, setPhase] = useState<'idle' | 'running' | 'revealed'>('idle');
   const [remaining, setRemaining] = useState(DURATION);
@@ -144,7 +144,7 @@ export function PitchRunner({
               <button onClick={restart} className={buttonSecondaryClass}>
                 <i className="ph ph-arrow-clockwise" /> Tentar de novo
               </button>
-              <Link href={`/topics/${topicId}`} className={buttonPrimaryClass} style={{ background: accent }}>
+              <Link href={backHref} className={buttonPrimaryClass} style={{ background: accent }}>
                 Voltar ao tópico
               </Link>
             </div>
