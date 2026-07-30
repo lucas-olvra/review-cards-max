@@ -31,12 +31,14 @@ export function NarrationRunner({
   prompts,
   frames,
   targetMinutes,
+  backHref,
 }: {
   sectionId: string;
   userId: string;
   prompts: string[];
   frames: LanguageFrame[];
   targetMinutes: number;
+  backHref: string;
 }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('setup');
@@ -130,7 +132,7 @@ export function NarrationRunner({
     }
 
     await createNarrationSession({ sectionId, prompt, durationSeconds: elapsed, audioPath, notes });
-    router.push(`/sections/${sectionId}`);
+    router.push(backHref);
   }
 
   const progress = Math.min(1, elapsed / targetSeconds);

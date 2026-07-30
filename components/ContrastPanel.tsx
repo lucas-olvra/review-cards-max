@@ -13,6 +13,7 @@ import {
   saveContrast,
 } from '@/lib/actions/contrasts';
 import { buttonPrimaryClass, buttonSecondaryClass, inputClass, labelClass, textareaClass } from '@/lib/ui';
+import { withFrom } from '@/lib/nav';
 import type { ContrastFromHere } from '@/lib/types';
 
 const CONTRAST_COLOR = '#7C3AED';
@@ -377,7 +378,7 @@ export function ContrastPanel({
           )}
           {drillN > 0 && (
             <Link
-              href={`/sections/${sectionId}/discriminate`}
+              href={withFrom(`/sections/${sectionId}/discriminate`, `/topics/${topicId}#confundo-com`)}
               className="rcp-btn-primary"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: CONTRAST_COLOR, boxShadow: `0 6px 16px -7px ${CONTRAST_COLOR}b3` }}
             >

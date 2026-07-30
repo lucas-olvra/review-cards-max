@@ -18,6 +18,7 @@ import {
   labelClass,
   textareaClass,
 } from '@/lib/ui';
+import { withFrom } from '@/lib/nav';
 import type { DiscursiveQuestion } from '@/lib/types';
 
 const DISC_COLOR = '#4F46E5';
@@ -111,7 +112,7 @@ export function DiscursiveSection({
           )}
           {items.length > 0 && (
             <Link
-              href={`/topics/${topicId}/review-discursive`}
+              href={withFrom(`/topics/${topicId}/review-discursive`, `/topics/${topicId}#discursivas`)}
               className="rcp-btn-primary"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: DISC_COLOR, boxShadow: `0 6px 16px -7px ${DISC_COLOR}b3` }}
             >

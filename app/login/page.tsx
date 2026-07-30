@@ -3,6 +3,7 @@ import { accent, buttonPrimaryClass, inputClass } from '@/lib/ui';
 import { AuthBrandPanel } from '@/components/AuthBrandPanel';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AuthDivider, GoogleAuthButton } from '@/components/GoogleAuthButton';
 
 export default async function LoginPage({
   searchParams,
@@ -66,6 +67,9 @@ export default async function LoginPage({
               {params.error}
             </p>
           )}
+
+          <GoogleAuthButton label="Entrar com o Google" />
+          <AuthDivider />
 
           <form action={signIn} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <label style={{ display: 'block' }}>

@@ -11,11 +11,13 @@ const DRILL_COLOR = '#7C3AED';
 const DRILL_TINT = '#F1E9FE';
 
 export function DiscriminateRunner({
-  sectionId,
   questions,
+  backHref,
+  backLabel,
 }: {
-  sectionId: string;
   questions: ContrastDrillQuestion[];
+  backHref: string;
+  backLabel: string;
 }) {
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
@@ -29,8 +31,8 @@ export function DiscriminateRunner({
           Nenhum cenário de treino ainda. Abra um tópico, ligue ele ao que você confunde e adicione
           situações onde os dois competem.
         </p>
-        <Link href={`/sections/${sectionId}`} className={buttonSecondaryClass} style={{ marginTop: 18 }}>
-          Voltar à seção
+        <Link href={backHref} className={buttonSecondaryClass} style={{ marginTop: 18 }}>
+          {backLabel}
         </Link>
       </div>
     );
@@ -66,8 +68,8 @@ export function DiscriminateRunner({
           >
             <i className="ph ph-arrow-clockwise" /> Refazer
           </button>
-          <Link href={`/sections/${sectionId}`} className={buttonPrimaryClass}>
-            Voltar à seção
+          <Link href={backHref} className={buttonPrimaryClass}>
+            {backLabel}
           </Link>
         </div>
       </motion.div>

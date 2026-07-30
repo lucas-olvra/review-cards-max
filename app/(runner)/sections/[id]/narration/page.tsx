@@ -5,11 +5,23 @@ import { getSection } from '@/lib/actions/sections';
 import { getLanguageItems } from '@/lib/actions/language';
 import { NarrationRunner } from '@/components/language/NarrationRunner';
 import { planFor } from '@/lib/language/seed';
+import { safeInternalHref } from '@/lib/nav';
 
-export default async function NarrationPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function NarrationPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { id } = await params;
+  const { from } = await searchParams;
   const section = await getSection(id);
   if (!section || section.kind !== 'language') notFound();
+
+  // Sem isso a sessão salva devolvia a pessoa pra aba "Moldes" da seção, longe
+  // do painel de narração de onde ela tinha saído.
+  const backHref = safeInternalHref(from, `/sections/${id}?tab=narration`);
 
   const supabase = await createClient();
   const {
@@ -30,7 +42,7 @@ export default async function NarrationPage({ params }: { params: Promise<{ id: 
   return (
     <div style={{ maxWidth: 620, margin: '0 auto', padding: '26px 26px 0' }}>
       <Link
-        href={`/sections/${id}`}
+        href={backHref}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 500, color: '#86827A' }}
       >
         <i className="ph ph-x" /> Sair
@@ -41,6 +53,7 @@ export default async function NarrationPage({ params }: { params: Promise<{ id: 
         prompts={plan.narrationPrompts}
         frames={cues}
         targetMinutes={5}
+        backHref={backHref}
       />
     </div>
   );

@@ -14,6 +14,7 @@ import {
   labelClass,
   textareaClass,
 } from '@/lib/ui';
+import { withFrom } from '@/lib/nav';
 import type { Card } from '@/lib/types';
 
 const CARD_COLOR = '#0891A5';
@@ -129,7 +130,7 @@ export function CardsSection({ topicId, cards }: { topicId: string; cards: Card[
           )}
           {cards.length > 0 && (
             <Link
-              href={`/topics/${topicId}/review`}
+              href={withFrom(`/topics/${topicId}/review`, `/topics/${topicId}#cartoes`)}
               className="rcp-btn-primary"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: CARD_COLOR, boxShadow: `0 6px 16px -7px ${CARD_COLOR}b3` }}
             >

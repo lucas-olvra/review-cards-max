@@ -10,11 +10,11 @@ import type { DiscursiveQuestion } from '@/lib/types';
 const DISC_COLOR = '#4F46E5';
 
 export function DiscursiveRunner({
-  topicId,
   items,
+  backHref,
 }: {
-  topicId: string;
   items: DiscursiveQuestion[];
+  backHref: string;
 }) {
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
@@ -52,7 +52,7 @@ export function DiscursiveRunner({
           {hits}
           <span style={{ color: '#C9C4BB', fontSize: 32 }}>/{items.length}</span>
         </div>
-        <Link href={`/topics/${topicId}`} className={buttonPrimaryClass}>
+        <Link href={backHref} className={buttonPrimaryClass}>
           Voltar ao tópico
         </Link>
       </motion.div>

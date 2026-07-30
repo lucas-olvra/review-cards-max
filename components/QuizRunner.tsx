@@ -10,13 +10,13 @@ import type { Card } from '@/lib/types';
 const QUIZ_COLOR = '#0891A5';
 
 export function QuizRunner({
-  topicId,
   cards,
   conceptWhat,
+  backHref,
 }: {
-  topicId: string;
   cards: Card[];
   conceptWhat: string;
+  backHref: string;
 }) {
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
@@ -66,7 +66,7 @@ export function QuizRunner({
           >
             <i className="ph ph-arrow-clockwise" /> Refazer
           </button>
-          <Link href={`/topics/${topicId}`} className={buttonPrimaryClass}>
+          <Link href={backHref} className={buttonPrimaryClass}>
             Voltar ao tópico
           </Link>
         </div>

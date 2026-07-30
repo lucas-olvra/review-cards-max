@@ -11,7 +11,11 @@ import type { LanguageWordGroup } from '@/lib/language/seed';
 import type { NarrationStats } from '@/lib/language/stats';
 import type { LanguageItem, NarrationSession } from '@/lib/types';
 
-type Tab = 'frames' | 'words' | 'narration';
+export type Tab = 'frames' | 'words' | 'narration';
+
+export function parseTab(raw: string | undefined): Tab {
+  return raw === 'words' || raw === 'narration' ? raw : 'frames';
+}
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'frames', label: 'Moldes', icon: 'ph-fill ph-quotes' },
@@ -156,6 +160,7 @@ export function LanguageHub({
   totalSeedWords,
   sessions,
   stats,
+  initialTab,
 }: {
   sectionId: string;
   sectionName: string;
@@ -167,8 +172,11 @@ export function LanguageHub({
   totalSeedWords: number;
   sessions: NarrationSession[];
   stats: NarrationStats;
+  initialTab: Tab;
 }) {
-  const [tab, setTab] = useState<Tab>('frames');
+  // A aba é estado local, mas nasce do `?tab=` da URL: é assim que voltar da
+  // tela de narração cai de novo no painel de narração, e não em "Moldes".
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   return (
     <>

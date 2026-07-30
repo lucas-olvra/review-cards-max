@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { deleteNarrationSession, getNarrationAudioUrl } from '@/lib/actions/language';
 import { accent } from '@/lib/ui';
+import { withFrom } from '@/lib/nav';
 import type { NarrationStats } from '@/lib/language/stats';
 import type { NarrationSession } from '@/lib/types';
 
@@ -113,7 +114,7 @@ export function NarrationPanel({
           português e segue. É o único exercício que treina velocidade de produção.
         </p>
         <Link
-          href={`/sections/${sectionId}/narration`}
+          href={withFrom(`/sections/${sectionId}/narration`, `/sections/${sectionId}?tab=narration`)}
           className="rcp-btn-primary"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: '#fff' }}
         >
