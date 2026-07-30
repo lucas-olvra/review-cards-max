@@ -56,6 +56,23 @@ html {
   }
 }
 
+/* Entrada de página. Fica em CSS de propósito: em JS o HTML do servidor sairia
+   com opacity 0 e a página ficaria invisível se a hidratação não completasse.
+   `both` garante que o estado final seja opacity 1. */
+.rcp-page-in {
+  animation: rcp-page-in 0.25s ease-out both;
+}
+@keyframes rcp-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .rcp-skeleton {
   background: linear-gradient(90deg, #EFEDE6 25%, #E6E3DA 37%, #EFEDE6 63%);
   background-size: 400% 100%;
@@ -85,6 +102,10 @@ html {
     animation: none;
   }
   .rcp-skeleton {
+    animation: none;
+  }
+  /* Sem animação o elemento nasce visível — não existe opacity fora do keyframe. */
+  .rcp-page-in {
     animation: none;
   }
 }
