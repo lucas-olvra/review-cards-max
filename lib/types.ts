@@ -58,6 +58,12 @@ export interface Topic {
   exercise_prompt: string;
   exercise_solution: string;
   pitch: string;
+  // O teste que resolve "é caso disso?" antes do nome do tópico aparecer.
+  // Vazios quando o tópico não é uma escolha entre alternativas — ver
+  // migration 0012.
+  decisive_question: string;
+  decisive_yes: string;
+  decisive_no: string;
   analogy_caption: string;
   analogy_diagram: AnalogyDiagram;
   /** @deprecated desde a migration 0011 — convertido para `analogy_scene` na primeira abertura. */

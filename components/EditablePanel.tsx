@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type ReactNode } from 'react';
 import { RichText } from '@/lib/render';
 import { buttonPrimaryClass, labelClass, textareaClass } from '@/lib/ui';
 
@@ -15,6 +15,7 @@ export function EditablePanel({
   action,
   emptyLabel,
   isCode,
+  preview,
 }: {
   icon: string;
   title: string;
@@ -24,6 +25,11 @@ export function EditablePanel({
   action: (formData: FormData) => Promise<void>;
   emptyLabel?: string;
   isCode?: boolean;
+  // Leitura customizada para painéis cujos campos não são prosa sequencial —
+  // hoje só a decisão, que precisa exibir pergunta/sim/não com hierarquia
+  // própria. Vem renderizado do servidor (é o resultado de um Server
+  // Component), então continua fora do bundle deste componente cliente.
+  preview?: ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -95,6 +101,7 @@ export function EditablePanel({
             <code>{fields[0]?.value}</code>
           </pre>
         ) : (
+          preview ??
           fields.map((f) => (
             <div key={f.name} style={{ fontSize: 15, lineHeight: 1.65, color: '#35322D' }}>
               <RichText text={f.value} />

@@ -85,6 +85,9 @@ export interface CreateTopicInput {
   exercise_prompt?: string;
   exercise_solution?: string;
   pitch?: string;
+  decisive_question?: string;
+  decisive_yes?: string;
+  decisive_no?: string;
   analogy_caption?: string;
   analogy_diagram?: AnalogyDiagramInput;
   cards?: CardInput[];
