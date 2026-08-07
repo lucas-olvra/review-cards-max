@@ -100,6 +100,33 @@ const languageItemShape = z.object({
   category: z.string().optional().describe('Grupo temático, ex: "Trabalho", "Viagem", "Verbos"'),
 });
 
+// O teste que resolve "é caso disso?" no meio de um exercício, quando o nome do
+// tópico ainda não apareceu em lugar nenhum. É o único campo do tópico escrito
+// para ser lido antes de saber a resposta — todo o resto pressupõe que o
+// usuário já abriu o tópico certo.
+const decisionFieldsShape = {
+  decisive_question: z
+    .string()
+    .optional()
+    .describe(
+      'A pergunta que decide se este tópico é a resposta. Regras: binária (sim/não), ' +
+        'respondível só lendo o enunciado de um exercício, sem citar o nome do tópico, e ela ' +
+        'precisa PODER dar "não" — se nenhuma situação plausível responde não, é definição ' +
+        'disfarçada, não teste. Ex: "o conjunto de valores pode crescer sem recompilar?". ' +
+        'Deixe os três campos de decisão VAZIOS quando o tópico não for uma escolha entre ' +
+        'alternativas (event loop, garbage collector, Big-O): sem rival não existe teste, e ' +
+        'dicotomia inventada é pior que campo vazio.'
+    ),
+  decisive_yes: z
+    .string()
+    .optional()
+    .describe('Uma linha: o que fazer quando a resposta é sim — em geral usar este tópico, mais a condição extra se houver.'),
+  decisive_no: z
+    .string()
+    .optional()
+    .describe('Uma linha: o que usar NO LUGAR quando a resposta é não. Nomeie a alternativa concreta — "não use" sozinho não decide nada.'),
+};
+
 const topicFieldsShape = {
   concept_what: z.string().optional().describe('O que é o conceito'),
   concept_why: z.string().optional().describe('Por que esse conceito existe'),
@@ -110,6 +137,7 @@ const topicFieldsShape = {
   exercise_prompt: z.string().optional().describe('Enunciado de um exercício de prática'),
   exercise_solution: z.string().optional().describe('Gabarito/solução do exercício'),
   pitch: z.string().optional().describe('Resumo de 30 segundos para explicar em voz alta'),
+  ...decisionFieldsShape,
   ...analogyFieldsShape,
   ...sectionFieldsShape,
 };
@@ -202,6 +230,11 @@ server.registerTool(
       'pitch. Um tópico com metade dos campos vazios deixa buracos visíveis na interface — se ' +
       'faltar informação pra algum campo, escreva o que der em vez de omitir. Inclua também ' +
       'cartões de múltipla escolha, perguntas discursivas e a analogia visual.\n\n' +
+      'Quando o tópico for uma escolha entre alternativas, preencha decisive_question, ' +
+      'decisive_yes e decisive_no — é o teste que o usuário aplica no meio de um exercício, ' +
+      'antes de o nome do tópico aparecer, e resolve mais que qualquer definição. Pela mesma ' +
+      'razão, o exercise_prompt NÃO pode citar o nome do tópico: enunciado que já entrega a ' +
+      'ferramenta não treina escolher a ferramenta.\n\n' +
       'Direcione o tópico pra seção certa: se o usuário disse em qual está estudando, passe ' +
       'section_name (cria se não existir) ou section_id. Em "anti_patterns", quando a ' +
       'limitação for "use outra coisa aqui", nomeie a alternativa — e se essa alternativa ' +

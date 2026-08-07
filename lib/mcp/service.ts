@@ -56,6 +56,9 @@ export interface TopicFields {
   exercise_prompt?: string;
   exercise_solution?: string;
   pitch?: string;
+  decisive_question?: string;
+  decisive_yes?: string;
+  decisive_no?: string;
   analogy_caption?: string;
   analogy_diagram?: { shapes?: AnalogyShapeInput[]; arrows?: AnalogyArrowInput[] };
 }
@@ -77,6 +80,9 @@ const ALLOWED_UPDATE_FIELDS = [
   'exercise_prompt',
   'exercise_solution',
   'pitch',
+  'decisive_question',
+  'decisive_yes',
+  'decisive_no',
   'analogy_caption',
   'analogy_diagram',
 ] as const satisfies readonly (keyof TopicFields)[];
@@ -368,6 +374,9 @@ export async function createTopic(userId: string, input: CreateTopicInput) {
       exercise_prompt: input.exercise_prompt ?? '',
       exercise_solution: input.exercise_solution ?? '',
       pitch: input.pitch ?? '',
+      decisive_question: input.decisive_question ?? '',
+      decisive_yes: input.decisive_yes ?? '',
+      decisive_no: input.decisive_no ?? '',
       analogy_caption: input.analogy_caption ?? '',
       analogy_diagram: normalizeAnalogyDiagram(input.analogy_diagram),
     })

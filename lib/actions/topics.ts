@@ -106,6 +106,9 @@ const EDITABLE_FIELDS = [
   'exercise_prompt',
   'exercise_solution',
   'pitch',
+  'decisive_question',
+  'decisive_yes',
+  'decisive_no',
 ] as const;
 export type EditableTopicField = (typeof EDITABLE_FIELDS)[number];
 

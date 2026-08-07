@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTopic, getTopics, updateTopicPanel, deleteTopic } from '@/lib/actions/topics';
 import { getContrastCandidates, getContrastsForTopic } from '@/lib/actions/contrasts';
 import { ContrastPanel } from '@/components/ContrastPanel';
+import { DecisionPanel } from '@/components/DecisionPanel';
 import { EditablePanel } from '@/components/EditablePanel';
 import { AnalogyPanel } from '@/components/AnalogyPanel';
 import { CardsSection } from '@/components/CardsSection';
@@ -41,6 +42,14 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
       <TopicHeader topicId={topic.id} name={topic.name} icon={palette.icon} color={palette.bg} />
 
       <TopicAudioPlayer topic={topic} />
+
+      {/* Antes do mapa do ciclo de propósito: os painéis abaixo são estudo, e
+          isso aqui é consulta — é o que você abre no meio de um exercício pra
+          decidir se o tópico é a resposta. Fica como um botão fino enquanto
+          estiver vazio, que é o estado correto pra tópico que não é escolha. */}
+      <div id="decisao" style={{ marginTop: 14 }}>
+        <DecisionPanel topic={topic} />
+      </div>
 
       <div
         className="rcp-scroll"
