@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { RichText } from '@/lib/render';
+import { ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
 import { accent, buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 
 const DURATION = 30;
@@ -13,13 +14,21 @@ export function PitchRunner({
   topicName,
   pitch,
   backHref,
+  topicId,
+  decisiveQuestion = '',
 }: {
   topicName: string;
   pitch: string;
   backHref: string;
+  topicId: string;
+  decisiveQuestion?: string;
 }) {
   const [phase, setPhase] = useState<'idle' | 'running' | 'revealed'>('idle');
   const [remaining, setRemaining] = useState(DURATION);
+  // Explicar em voz alta não tem placar automático — quem sabe se travou é
+  // quem falou. A autoavaliação abaixo é o sinal, e sem ela a sessão não é
+  // registrada: gravar "passou" por omissão inflaria a escada.
+  const { outcome, pending, record, reset } = useReviewRecorder(topicId, 'pitch');
 
   // O efeito só existe enquanto phase === 'running'; ao desmontar ou trocar
   // de fase (inclusive saindo da tela), o cleanup limpa o interval —
@@ -41,6 +50,7 @@ export function PitchRunner({
   const restart = () => {
     setRemaining(DURATION);
     setPhase('idle');
+    reset();
   };
 
   const ringColor = remaining <= 5 ? '#EF4444' : '#FB6514';
@@ -70,10 +80,37 @@ export function PitchRunner({
       <AnimatePresence mode="wait">
         {phase === 'idle' && (
           <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: '#6B6862', margin: '0 auto 26px', maxWidth: '40ch' }}>
+            <p style={{ fontSize: 15, lineHeight: 1.6, color: '#6B6862', margin: '0 auto 22px', maxWidth: '40ch' }}>
               Ensine este tópico em voz alta, como se explicasse para alguém. Clique em começar
               quando estiver pronto.
             </p>
+            {/* O teste binário do tópico entra aqui porque este é o primeiro
+                degrau da escada: antes de explicar o que a coisa é, saber
+                reconhecer quando ela é o caso. */}
+            {decisiveQuestion && (
+              <div
+                style={{
+                  textAlign: 'left',
+                  margin: '0 auto 26px',
+                  maxWidth: '46ch',
+                  borderRadius: 14,
+                  padding: '13px 15px',
+                  background: '#E9ECFF',
+                  display: 'flex',
+                  gap: 10,
+                }}
+              >
+                <i className="ph-fill ph-key" style={{ color: accent, fontSize: 17, flex: 'none', marginTop: 2 }} />
+                <div>
+                  <span style={{ display: 'block', font: '600 12px var(--font-body)', letterSpacing: '.04em', textTransform: 'uppercase', color: accent, marginBottom: 4 }}>
+                    Responda antes de começar
+                  </span>
+                  <div style={{ fontSize: 14.5, lineHeight: 1.55, color: '#35322D' }}>
+                    <RichText text={decisiveQuestion} />
+                  </div>
+                </div>
+              </div>
+            )}
             <button
               onClick={() => setPhase('running')}
               style={{
@@ -140,6 +177,31 @@ export function PitchRunner({
                 <em style={{ color: '#86827A' }}>Sem resumo salvo.</em>
               )}
             </div>
+            {!outcome && !pending ? (
+              <div style={{ margin: '0 0 22px' }}>
+                <p style={{ fontSize: 14, color: '#6B6862', textAlign: 'center', margin: '0 0 12px' }}>
+                  Comparando com o resumo: você explicou tudo isso sem olhar?
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  <button
+                    onClick={() => record(1, 1)}
+                    className="rcp-btn-primary"
+                    style={{ flex: '1 1 150px', background: '#12B76A', boxShadow: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}
+                  >
+                    <i className="ph-bold ph-check" /> Expliquei inteiro
+                  </button>
+                  <button
+                    onClick={() => record(0, 1)}
+                    className={buttonSecondaryClass}
+                    style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}
+                  >
+                    <i className="ph-bold ph-arrow-counter-clockwise" /> Travei
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <ReviewOutcomeBanner outcome={outcome} pending={pending} />
+            )}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={restart} className={buttonSecondaryClass}>
                 <i className="ph ph-arrow-clockwise" /> Tentar de novo

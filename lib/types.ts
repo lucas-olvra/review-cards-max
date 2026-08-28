@@ -1,3 +1,5 @@
+import type { ReviewMode } from '@/lib/review/ladder';
+
 export interface AnalogyShape {
   id: string;
   type: 'box' | 'circle' | 'text';
@@ -69,6 +71,11 @@ export interface Topic {
   /** @deprecated desde a migration 0011 — convertido para `analogy_scene` na primeira abertura. */
   analogy_drawing: AnalogyStroke[];
   analogy_scene: AnalogyScene;
+  // Agenda de revisão (migration 0014). `review_step` é o índice do degrau na
+  // LADDER de lib/review/ladder.ts; `due_at` é quando o tópico volta pra fila
+  // de "Hoje".
+  review_step: number;
+  due_at: string;
   created_at: string;
   updated_at: string;
 }
@@ -161,6 +168,22 @@ export interface ContrastFromHere {
   chooseThisWhen: string;
   chooseOtherWhen: string;
   scenarios: { situation: string; why: string; answerTopicId: string; answerName: string }[];
+}
+
+// Uma sessão de revisão que aconteceu. `rung` é o degrau que ela cobrou, que
+// nem sempre é o degrau em que o tópico estava — ver migration 0014.
+export interface TopicReview {
+  id: string;
+  user_id: string;
+  topic_id: string;
+  mode: ReviewMode;
+  rung: number;
+  hits: number;
+  total: number;
+  passed: boolean;
+  step_before: number;
+  step_after: number;
+  reviewed_at: string;
 }
 
 export interface ChangelogStep {

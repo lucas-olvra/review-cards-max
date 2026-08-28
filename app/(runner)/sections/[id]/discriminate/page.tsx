@@ -10,14 +10,16 @@ export default async function DiscriminatePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; topic?: string }>;
 }) {
   const { id } = await params;
-  const { from } = await searchParams;
+  const { from, topic } = await searchParams;
   const section = await getSection(id);
   if (!section) notFound();
 
-  const questions = await getSectionDrill(id);
+  // Com `topic` o treino é o degrau de discriminação daquele tópico na fila de
+  // hoje: só os contrastes dele, e o resultado creditado a ele.
+  const questions = await getSectionDrill(id, topic);
 
   // O treino é da seção inteira, mas quem entra pelo painel "Confundo com" de
   // um tópico espera voltar pro tópico — e não pra lista de tópicos da seção.
@@ -32,7 +34,12 @@ export default async function DiscriminatePage({
       >
         <i className="ph ph-x" /> Sair do treino
       </Link>
-      <DiscriminateRunner questions={questions} backHref={backHref} backLabel={backLabel} />
+      <DiscriminateRunner
+        questions={questions}
+        backHref={backHref}
+        backLabel={backLabel}
+        reviewTopicId={topic}
+      />
     </div>
   );
 }

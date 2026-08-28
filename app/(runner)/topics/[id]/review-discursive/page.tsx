@@ -26,7 +26,7 @@ export default async function ReviewDiscursivePage({
       >
         <i className="ph ph-x" /> Sair da revisão
       </Link>
-      <DiscursiveRunner items={topic.discursive_questions} backHref={backHref} />
+      <DiscursiveRunner items={topic.discursive_questions} backHref={backHref} topicId={topic.id} />
     </div>
   );
 }

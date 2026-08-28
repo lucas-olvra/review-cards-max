@@ -26,7 +26,13 @@ export default async function PitchPage({
       >
         <i className="ph ph-x" /> Sair
       </Link>
-      <PitchRunner topicName={topic.name} pitch={topic.pitch} backHref={backHref} />
+      <PitchRunner
+        topicName={topic.name}
+        pitch={topic.pitch}
+        backHref={backHref}
+        topicId={topic.id}
+        decisiveQuestion={topic.decisive_question}
+      />
     </div>
   );
 }

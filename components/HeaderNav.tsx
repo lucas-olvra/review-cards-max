@@ -10,12 +10,36 @@ import { accent } from '@/lib/ui';
 // abaixo de 640px — troca controlada por CSS em globals.css). Duplicar os
 // `Link`/`form` é seguro aqui porque são elementos sem estado; o mesmo não
 // vale pro WhatsNewModal (fica de fora, montado uma única vez no header).
-export function HeaderNav() {
+export function HeaderNav({ dueCount }: { dueCount: number }) {
   const [open, setOpen] = useState(false);
+
+  // O contador é o gancho: sem um número visível no header, a fila de hoje
+  // vira mais uma página que só existe pra quem lembra de abrir.
+  const badge =
+    dueCount > 0 ? (
+      <span
+        style={{
+          display: 'inline-grid',
+          placeItems: 'center',
+          minWidth: 19,
+          height: 19,
+          padding: '0 5px',
+          borderRadius: 999,
+          background: accent,
+          color: '#fff',
+          font: '700 11.5px var(--font-body)',
+        }}
+      >
+        {dueCount}
+      </span>
+    ) : null;
 
   return (
     <>
       <div className="rcp-nav-desktop">
+        <Link href="/today" className="rcp-navlink" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+          <i className="ph-fill ph-calendar-check" style={{ fontSize: 15 }} /> Hoje {badge}
+        </Link>
         <Link href="/settings/tokens" className="rcp-navlink" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <i className="ph-fill ph-robot" style={{ fontSize: 15 }} /> Tokens &amp; MCP
         </Link>
@@ -58,6 +82,14 @@ export function HeaderNav() {
                 gap: 2,
               }}
             >
+              <Link
+                href="/today"
+                onClick={() => setOpen(false)}
+                className="rcp-navlink"
+                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                <i className="ph-fill ph-calendar-check" style={{ fontSize: 15 }} /> Hoje {badge}
+              </Link>
               <Link
                 href="/settings/tokens"
                 onClick={() => setOpen(false)}

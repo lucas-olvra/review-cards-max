@@ -83,18 +83,26 @@ export interface ContrastDrillQuestion {
 // contrastes que tocam algum tópico dela, embaralhados. É embaralhado de
 // propósito — o valor do exercício é a pergunta chegar sem etiqueta de tópico,
 // que é justamente o que a revisão dentro de um tópico não consegue fazer.
-export async function getSectionDrill(sectionId: string): Promise<ContrastDrillQuestion[]> {
+//
+// `topicId` recorta o treino para os contrastes de um tópico só. É o que a fila
+// de hoje usa no degrau de discriminação: ali a sessão é a revisão daquele
+// tópico, e cenários de outros pares não deveriam decidir se ele passou.
+export async function getSectionDrill(
+  sectionId: string,
+  topicId?: string
+): Promise<ContrastDrillQuestion[]> {
   const supabase = await createClient();
 
   const { data: topics } = await supabase.from('topics').select('id').eq('section_id', sectionId);
   const ids = (topics ?? []).map((t) => t.id as string);
   if (!ids.length) return [];
+  if (topicId && !ids.includes(topicId)) return [];
 
   const list = ids.join(',');
-  const { data, error } = await supabase
-    .from('topic_contrasts')
-    .select('*')
-    .or(`topic_a.in.(${list}),topic_b.in.(${list})`);
+  const filter = topicId
+    ? `topic_a.eq.${topicId},topic_b.eq.${topicId}`
+    : `topic_a.in.(${list}),topic_b.in.(${list})`;
+  const { data, error } = await supabase.from('topic_contrasts').select('*').or(filter);
   if (error) throw error;
 
   const rows = (data ?? []) as TopicContrast[];
