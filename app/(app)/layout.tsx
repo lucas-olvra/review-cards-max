@@ -3,10 +3,11 @@ import { PageTransition } from '@/components/PageTransition';
 import { WhatsNewModal } from '@/components/WhatsNewModal';
 import { HeaderNav } from '@/components/HeaderNav';
 import { getUnseenChangelog } from '@/lib/actions/changelog';
+import { countDueToday } from '@/lib/actions/reviews';
 import { accent } from '@/lib/ui';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const unseenChangelog = await getUnseenChangelog();
+  const [unseenChangelog, dueCount] = await Promise.all([getUnseenChangelog(), countDueToday()]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -45,7 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <WhatsNewModal initialEntries={unseenChangelog} />
-          <HeaderNav />
+          <HeaderNav dueCount={dueCount} />
         </nav>
       </header>
       <main style={{ flex: 1 }}>

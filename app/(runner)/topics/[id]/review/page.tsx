@@ -28,7 +28,7 @@ export default async function ReviewPage({
       >
         <i className="ph ph-x" /> Sair da revisão
       </Link>
-      <QuizRunner cards={topic.cards} conceptWhat={topic.concept_what} backHref={backHref} />
+      <QuizRunner cards={topic.cards} conceptWhat={topic.concept_what} backHref={backHref} topicId={topic.id} />
     </div>
   );
 }

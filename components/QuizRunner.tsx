@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
+import { ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
 import { accent, buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { Card } from '@/lib/types';
 
@@ -13,14 +14,17 @@ export function QuizRunner({
   cards,
   conceptWhat,
   backHref,
+  topicId,
 }: {
   cards: Card[];
   conceptWhat: string;
   backHref: string;
+  topicId: string;
 }) {
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const { outcome, pending, record, reset } = useReviewRecorder(topicId, 'cards');
 
   if (!cards.length) {
     return <p style={{ color: '#86827A' }}>Sem cartões para revisar ainda.</p>;
@@ -55,12 +59,14 @@ export function QuizRunner({
           {hits}
           <span style={{ color: '#C9C4BB', fontSize: 32 }}>/{cards.length}</span>
         </div>
+        <ReviewOutcomeBanner outcome={outcome} pending={pending} />
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
           <button
             onClick={() => {
               setIdx(0);
               setHits(0);
               setSelected(null);
+              reset();
             }}
             className={buttonSecondaryClass}
           >
@@ -206,7 +212,12 @@ export function QuizRunner({
             </div>
             <button
               onClick={() => {
-                if (ok) setHits((h) => h + 1);
+                const finalHits = hits + (ok ? 1 : 0);
+                if (ok) setHits(finalHits);
+                // O placar só está completo aqui, no último "Próxima" — e é o
+                // estado local que manda, porque o setHits acima ainda não
+                // chegou na próxima renderização.
+                if (idx + 1 >= cards.length) record(finalHits, cards.length);
                 setSelected(null);
                 setIdx((i) => i + 1);
               }}
