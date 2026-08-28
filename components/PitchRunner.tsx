@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { RichText } from '@/lib/render';
-import { ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
 import { accent, buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 
 const DURATION = 30;
@@ -26,9 +26,10 @@ export function PitchRunner({
   const [phase, setPhase] = useState<'idle' | 'running' | 'revealed'>('idle');
   const [remaining, setRemaining] = useState(DURATION);
   // Explicar em voz alta não tem placar automático — quem sabe se travou é
-  // quem falou. A autoavaliação abaixo é o sinal, e sem ela a sessão não é
-  // registrada: gravar "passou" por omissão inflaria a escada.
-  const { outcome, pending, record, reset } = useReviewRecorder(topicId, 'pitch');
+  // quem falou. Os quatro graus abaixo são o único sinal, e sem eles a sessão
+  // não é registrada: gravar "passou" por omissão inflaria a escada. Aqui
+  // nenhum grau vem sugerido, justamente porque o app não tem o que palpitar.
+  const { outcome, pending, record, changeRetry, reset } = useReviewRecorder(topicId, 'pitch');
 
   // O efeito só existe enquanto phase === 'running'; ao desmontar ou trocar
   // de fase (inclusive saindo da tela), o cleanup limpa o interval —
@@ -178,29 +179,9 @@ export function PitchRunner({
               )}
             </div>
             {!outcome && !pending ? (
-              <div style={{ margin: '0 0 22px' }}>
-                <p style={{ fontSize: 14, color: '#6B6862', textAlign: 'center', margin: '0 0 12px' }}>
-                  Comparando com o resumo: você explicou tudo isso sem olhar?
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  <button
-                    onClick={() => record(1, 1)}
-                    className="rcp-btn-primary"
-                    style={{ flex: '1 1 150px', background: '#12B76A', boxShadow: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}
-                  >
-                    <i className="ph-bold ph-check" /> Expliquei inteiro
-                  </button>
-                  <button
-                    onClick={() => record(0, 1)}
-                    className={buttonSecondaryClass}
-                    style={{ flex: '1 1 150px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}
-                  >
-                    <i className="ph-bold ph-arrow-counter-clockwise" /> Travei
-                  </button>
-                </div>
-              </div>
+              <GradeButtons onGrade={(grade) => record(grade === 'again' ? 0 : 1, 1, grade)} />
             ) : (
-              <ReviewOutcomeBanner outcome={outcome} pending={pending} />
+              <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />
             )}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={restart} className={buttonSecondaryClass}>

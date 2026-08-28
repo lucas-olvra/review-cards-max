@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
-import { ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { suggestGrade } from '@/lib/review/ladder';
 import { buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { ContrastDrillQuestion } from '@/lib/actions/contrasts';
 
@@ -28,7 +29,7 @@ export function DiscriminateRunner({
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
-  const { outcome, pending, record, reset } = useReviewRecorder(reviewTopicId, 'discriminate');
+  const { outcome, pending, record, changeRetry, reset } = useReviewRecorder(reviewTopicId, 'discriminate');
 
   if (!questions.length) {
     return (
@@ -64,7 +65,16 @@ export function DiscriminateRunner({
           {hits}
           <span style={{ color: '#C9C4BB', fontSize: 32 }}>/{questions.length}</span>
         </div>
-        <ReviewOutcomeBanner outcome={outcome} pending={pending} />
+        {/* Sem `reviewTopicId` o treino é da seção e não pertence a tópico
+            nenhum: aí ele mostra o placar e mais nada. */}
+        {reviewTopicId && !outcome && !pending ? (
+          <GradeButtons
+            suggested={suggestGrade(hits, questions.length)}
+            onGrade={(grade) => record(hits, questions.length, grade)}
+          />
+        ) : (
+          <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />
+        )}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={() => {
@@ -183,9 +193,7 @@ export function DiscriminateRunner({
 
             <button
               onClick={() => {
-                const finalHits = hits + (ok ? 1 : 0);
-                if (ok) setHits(finalHits);
-                if (idx + 1 >= questions.length) record(finalHits, questions.length);
+                if (ok) setHits((h) => h + 1);
                 setSelected(null);
                 setIdx((i) => i + 1);
               }}
