@@ -9,10 +9,10 @@ export default async function PitchPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; day0?: string }>;
 }) {
   const { id } = await params;
-  const { from } = await searchParams;
+  const { from, day0 } = await searchParams;
   const topic = await getTopic(id);
   if (!topic) notFound();
 
@@ -40,6 +40,7 @@ export default async function PitchPage({
         topicId={topic.id}
         decisiveQuestion={topic.decisive_question}
         hint={hint}
+        day0={day0 === '1'}
       />
     </div>
   );

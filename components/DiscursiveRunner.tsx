@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
-import { ReviewHint, type HintData } from '@/components/ReviewHint';
+import { HintContent, ReviewHint, hasHint, type HintData } from '@/components/ReviewHint';
 import { buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { DiscursiveQuestion } from '@/lib/types';
 import { suggestGrade, type ReviewMode } from '@/lib/review/ladder';
@@ -72,19 +72,25 @@ export function DiscursiveRunner({
   topicId,
   variant = 'discursive',
   hint,
+  day0 = false,
 }: {
   items: DiscursiveQuestion[];
   backHref: string;
   topicId: string;
   variant?: Variant;
   hint?: HintData;
+  /** Primeiro dia do tópico: nada é gravado e a dica não cobra nada. */
+  day0?: boolean;
 }) {
   const v = VARIANTS[variant];
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [hintUsed, setHintUsed] = useState(false);
-  const { outcome, pending, record, changeRetry } = useReviewRecorder(topicId, v.mode);
+  const { outcome, pending, record, changeRetry } = useReviewRecorder(
+    day0 ? undefined : topicId,
+    v.mode
+  );
 
   if (!items.length) {
     return <p style={{ color: '#86827A' }}>{v.empty}</p>;
@@ -118,7 +124,22 @@ export function DiscursiveRunner({
           {hits}
           <span style={{ color: '#C9C4BB', fontSize: 32 }}>/{items.length}</span>
         </div>
-        {!outcome && !pending ? (
+        {day0 ? (
+          <p
+            style={{
+              fontSize: 13.5,
+              color: '#6B6862',
+              lineHeight: 1.6,
+              margin: '0 0 22px',
+              padding: '12px 15px',
+              borderRadius: 14,
+              background: '#F7F6F3',
+            }}
+          >
+            <i className="ph ph-calendar-plus" /> Primeiro contato — nada foi agendado. Este tópico
+            entra na fila amanhã.
+          </p>
+        ) : !outcome && !pending ? (
           <GradeButtons
             suggested={suggestGrade(hits, items.length)}
             capped={hintUsed}
@@ -173,9 +194,17 @@ export function DiscursiveRunner({
           <RichText text={item.question} />
         </h3>
 
-        {!revealed && hint && (
-          <ReviewHint hint={hint} label={v.hintLabel} used={hintUsed} onUse={() => setHintUsed(true)} />
-        )}
+        {!revealed &&
+          hint &&
+          (day0 ? (
+            hasHint(hint) && (
+              <div style={{ marginBottom: 16 }}>
+                <HintContent hint={hint} label={v.hintLabel} />
+              </div>
+            )
+          ) : (
+            <ReviewHint hint={hint} label={v.hintLabel} used={hintUsed} onUse={() => setHintUsed(true)} />
+          ))}
 
         {!revealed ? (
           <div style={{ borderRadius: 14, padding: 22, background: '#FAFAF8', border: '1.5px dashed rgba(0,0,0,.14)', textAlign: 'center' }}>
