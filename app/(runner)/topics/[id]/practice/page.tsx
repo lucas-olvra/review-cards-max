@@ -13,10 +13,10 @@ export default async function PracticePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; day0?: string }>;
 }) {
   const { id } = await params;
-  const { from } = await searchParams;
+  const { from, day0 } = await searchParams;
   const topic = await getTopic(id);
   if (!topic) notFound();
 
@@ -54,6 +54,7 @@ export default async function PracticePage({
         topicId={topic.id}
         variant="practice"
         hint={{ text: topic.code || topic.concept_what }}
+        day0={day0 === '1'}
       />
     </div>
   );

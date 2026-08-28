@@ -72,6 +72,11 @@ export interface ContrastDrillQuestion {
   situation: string;
   why: string;
   decisive_question: string;
+  // Material da dica do treino. É o "o que se confunde" do par, não a pergunta
+  // que decide: a pergunta é a chave da resposta e entregaria o exercício,
+  // enquanto isto só devolve o eixo em que os dois se separam — você ainda tem
+  // que aplicar o eixo ao cenário.
+  confusion: string;
   // Alternativas já embaralhadas no servidor: sortear no cliente daria
   // divergência de hidratação, e sortear na renderização reembaralharia a cada
   // re-render (a resposta mudaria de lado depois de clicada).
@@ -124,6 +129,7 @@ export async function getSectionDrill(
         situation: s.situation,
         why: s.why ?? '',
         decisive_question: row.decisive_question,
+        confusion: row.confusion ?? '',
         options: correctFirst ? [correctName, otherName] : [otherName, correctName],
         correctIndex: correctFirst ? 0 : 1,
       });

@@ -212,6 +212,22 @@ export async function setRetry(topicId: string, minutes: number): Promise<number
   return safe;
 }
 
+// O dia 0 de um tópico é a janela entre criá-lo e a primeira revisão vencer.
+// Duas condições, e as duas importam: nunca revisado separa tópico novo de
+// tópico que caiu de volta pro degrau 0 depois de um erro; ainda não vencido
+// evita que o bloco de dia 0 apareça amanhã de manhã, competindo com a revisão
+// de verdade que acabou de entrar na fila.
+export async function isFirstDay(topicId: string, dueAt: string): Promise<boolean> {
+  if (new Date(dueAt) <= new Date()) return false;
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from('topic_reviews')
+    .select('id', { count: 'exact', head: true })
+    .eq('topic_id', topicId);
+  return (count ?? 0) === 0;
+}
+
 export interface TodayItem {
   topicId: string;
   topicName: string;

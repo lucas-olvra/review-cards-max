@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTopic, getTopics, updateTopicPanel, deleteTopic } from '@/lib/actions/topics';
 import { getContrastCandidates, getContrastsForTopic } from '@/lib/actions/contrasts';
+import { isFirstDay } from '@/lib/actions/reviews';
 import { ContrastPanel } from '@/components/ContrastPanel';
 import { DecisionPanel } from '@/components/DecisionPanel';
 import { EditablePanel } from '@/components/EditablePanel';
@@ -9,6 +10,7 @@ import { AnalogyPanel } from '@/components/AnalogyPanel';
 import { CardsSection } from '@/components/CardsSection';
 import { DiscursiveSection } from '@/components/DiscursiveSection';
 import { TopicHeader } from '@/components/TopicHeader';
+import { Day0Block } from '@/components/Day0Block';
 import { TopicAudioPlayer } from '@/components/TopicAudioPlayer';
 import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
 import { buttonDangerClass } from '@/lib/ui';
@@ -25,9 +27,10 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
   const idx = topics.findIndex((t) => t.id === id);
   const palette = paletteFor(idx < 0 ? 0 : idx);
 
-  const [contrasts, candidates] = await Promise.all([
+  const [contrasts, candidates, firstDay] = await Promise.all([
     getContrastsForTopic(id),
     getContrastCandidates(id, topic.section_id),
+    isFirstDay(id, topic.due_at),
   ]);
 
   return (
@@ -40,6 +43,18 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
       </Link>
 
       <TopicHeader topicId={topic.id} name={topic.name} icon={palette.icon} color={palette.bg} />
+
+      {/* Só na janela entre criar o tópico e a primeira revisão vencer. Depois
+          disso quem manda na atenção é a fila de hoje, e um segundo bloco
+          dizendo o que fazer competiria com ela. */}
+      {firstDay && (
+        <Day0Block
+          topicId={topic.id}
+          hasPitch={Boolean(topic.pitch.trim())}
+          hasDecisiveQuestion={Boolean(topic.decisive_question.trim())}
+          hasExercise={Boolean(topic.exercise_prompt.trim())}
+        />
+      )}
 
       <TopicAudioPlayer topic={topic} />
 
@@ -91,18 +106,22 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
           />
         ))}
 
-        <EditablePanel
-          icon={PRACTICE_STAGE_DEF.icon}
-          title={PRACTICE_STAGE_DEF.title}
-          color={PRACTICE_STAGE_DEF.color}
-          tint={PRACTICE_STAGE_DEF.tint}
-          fields={[
-            { name: 'exercise_prompt', label: 'Enunciado do exercício', value: topic.exercise_prompt },
-            { name: 'exercise_solution', label: 'Gabarito / solução', value: topic.exercise_solution },
-          ]}
-          action={updateTopicPanel.bind(null, topic.id, ['exercise_prompt', 'exercise_solution'])}
-          emptyLabel="+ Prática"
-        />
+        {/* `id` de verdade: é a âncora que o bloco de dia 0 usa quando o
+            exercício ainda não existe. */}
+        <div id="pratica">
+          <EditablePanel
+            icon={PRACTICE_STAGE_DEF.icon}
+            title={PRACTICE_STAGE_DEF.title}
+            color={PRACTICE_STAGE_DEF.color}
+            tint={PRACTICE_STAGE_DEF.tint}
+            fields={[
+              { name: 'exercise_prompt', label: 'Enunciado do exercício', value: topic.exercise_prompt },
+              { name: 'exercise_solution', label: 'Gabarito / solução', value: topic.exercise_solution },
+            ]}
+            action={updateTopicPanel.bind(null, topic.id, ['exercise_prompt', 'exercise_solution'])}
+            emptyLabel="+ Prática"
+          />
+        </div>
       </div>
 
       {/* Logo depois de "Onde não usar": é a continuação natural dela — lá você

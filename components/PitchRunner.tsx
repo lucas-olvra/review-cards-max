@@ -18,6 +18,7 @@ export function PitchRunner({
   topicId,
   decisiveQuestion = '',
   hint,
+  day0 = false,
 }: {
   topicName: string;
   pitch: string;
@@ -25,6 +26,8 @@ export function PitchRunner({
   topicId: string;
   decisiveQuestion?: string;
   hint?: HintData;
+  /** Primeiro dia do tópico: nada é gravado e a dica não cobra nada. */
+  day0?: boolean;
 }) {
   const [phase, setPhase] = useState<'idle' | 'running' | 'revealed'>('idle');
   const [remaining, setRemaining] = useState(DURATION);
@@ -33,7 +36,12 @@ export function PitchRunner({
   // quem falou. Os quatro graus abaixo são o único sinal, e sem eles a sessão
   // não é registrada: gravar "passou" por omissão inflaria a escada. Aqui
   // nenhum grau vem sugerido, justamente porque o app não tem o que palpitar.
-  const { outcome, pending, record, changeRetry, reset } = useReviewRecorder(topicId, 'pitch');
+  // No dia 0 o `topicId` não chega ao gravador: sem ele o hook não registra
+  // nada, que é a garantia de que o primeiro contato não mexe na escada.
+  const { outcome, pending, record, changeRetry, reset } = useReviewRecorder(
+    day0 ? undefined : topicId,
+    'pitch'
+  );
 
   // O efeito só existe enquanto phase === 'running'; ao desmontar ou trocar
   // de fase (inclusive saindo da tela), o cleanup limpa o interval —
@@ -166,9 +174,15 @@ export function PitchRunner({
             {/* O apoio existe pra travamento por detalhe, que era o buraco de
                 "explique sem olhar": travar por uma peça derrubava a sessão
                 inteira. Ele custa o teto de "Difícil" — ver ReviewHint. */}
-            {hint && (
-              <ReviewHint hint={hint} label="Analogia visual" used={hintUsed} onUse={() => setHintUsed(true)} />
-            )}
+            {hint &&
+              (day0 ? (
+                // Dia 0 é com o material aberto — não há medição pra proteger.
+                <div style={{ marginBottom: 16 }}>
+                  <HintContent hint={hint} label="Analogia visual" />
+                </div>
+              ) : (
+                <ReviewHint hint={hint} label="Analogia visual" used={hintUsed} onUse={() => setHintUsed(true)} />
+              ))}
             <button onClick={() => setPhase('revealed')} className={buttonSecondaryClass} style={{ borderRadius: 999 }}>
               Terminei / Pular
             </button>
@@ -197,7 +211,23 @@ export function PitchRunner({
                 <HintContent hint={hint} label="Analogia visual" />
               </div>
             )}
-            {!outcome && !pending ? (
+            {day0 ? (
+              <p
+                style={{
+                  fontSize: 13.5,
+                  color: '#6B6862',
+                  textAlign: 'center',
+                  lineHeight: 1.6,
+                  margin: '0 0 22px',
+                  padding: '12px 15px',
+                  borderRadius: 14,
+                  background: '#F7F6F3',
+                }}
+              >
+                <i className="ph ph-calendar-plus" /> Primeiro contato — nada foi agendado. Este
+                tópico entra na fila amanhã, cobrando isto sem o resumo na tela.
+              </p>
+            ) : !outcome && !pending ? (
               <GradeButtons
                 capped={hintUsed}
                 onGrade={(grade) => record(grade === 'again' ? 0 : 1, 1, grade, hintUsed)}
