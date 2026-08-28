@@ -1,4 +1,4 @@
-import type { ReviewMode } from '@/lib/review/ladder';
+import type { Grade, ReviewMode } from '@/lib/review/ladder';
 
 export interface AnalogyShape {
   id: string;
@@ -76,6 +76,11 @@ export interface Topic {
   // de "Hoje".
   review_step: number;
   due_at: string;
+  // Repescagem do mesmo dia (migration 0016). Vive em paralelo ao `due_at` pra
+  // não consumir vaga do teto diário; só vale enquanto `due_at` está no futuro.
+  retry_at: string | null;
+  /** Intervalo concedido na última revisão, em dias. 0 = nunca agendado. */
+  interval_days: number;
   created_at: string;
   updated_at: string;
 }
@@ -180,7 +185,11 @@ export interface TopicReview {
   rung: number;
   hits: number;
   total: number;
+  grade: Grade;
+  /** @deprecated desde 0016 — derivado de `grade`, mantido pro histórico do 0014. */
   passed: boolean;
+  /** Sessão de repescagem: registra, mas não mexe na escada. */
+  is_retry: boolean;
   step_before: number;
   step_after: number;
   reviewed_at: string;

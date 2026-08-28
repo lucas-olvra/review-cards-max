@@ -4,10 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
-import { ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
 import { buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { DiscursiveQuestion } from '@/lib/types';
-import type { ReviewMode } from '@/lib/review/ladder';
+import { suggestGrade, type ReviewMode } from '@/lib/review/ladder';
 
 // Dois degraus da escada têm exatamente a mesma mecânica — enunciado, formular
 // a resposta inteira de cabeça, revelar, se autoavaliar — e mudam só no que
@@ -77,7 +77,7 @@ export function DiscursiveRunner({
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const { outcome, pending, record } = useReviewRecorder(topicId, v.mode);
+  const { outcome, pending, record, changeRetry } = useReviewRecorder(topicId, v.mode);
 
   if (!items.length) {
     return <p style={{ color: '#86827A' }}>{v.empty}</p>;
@@ -111,7 +111,14 @@ export function DiscursiveRunner({
           {hits}
           <span style={{ color: '#C9C4BB', fontSize: 32 }}>/{items.length}</span>
         </div>
-        <ReviewOutcomeBanner outcome={outcome} pending={pending} />
+        {!outcome && !pending ? (
+          <GradeButtons
+            suggested={suggestGrade(hits, items.length)}
+            onGrade={(grade) => record(hits, items.length, grade)}
+          />
+        ) : (
+          <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />
+        )}
         <Link href={backHref} className={buttonPrimaryClass}>
           Voltar ao tópico
         </Link>
@@ -123,9 +130,7 @@ export function DiscursiveRunner({
   const pct = (idx / items.length) * 100;
 
   const advance = (ok: boolean) => {
-    const finalHits = hits + (ok ? 1 : 0);
-    if (ok) setHits(finalHits);
-    if (idx + 1 >= items.length) record(finalHits, items.length);
+    if (ok) setHits((h) => h + 1);
     setRevealed(false);
     setIdx((i) => i + 1);
   };

@@ -3,13 +3,15 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import {
+  addMinutes,
   DAILY_CAP,
+  DEFAULT_RETRY_MINUTES,
   LADDER,
   nextSchedule,
   overdueDays,
-  passedByScore,
   resolveRung,
   rungOf,
+  type Grade,
   type ReviewMode,
   type Rung,
   type TopicCaps,
@@ -19,20 +21,26 @@ import {
 // feature: a pessoa fecha a revisão já sabendo quando o tópico volta e o que
 // ele vai cobrar da próxima vez, em vez de ter que decidir isso sozinha.
 export interface ReviewOutcome {
-  passed: boolean;
-  /** Se a sessão realmente rebaixou o tópico. Falhar no primeiro degrau
+  grade: Grade;
+  /** Sessão de repescagem: registrou, mas não mexeu na escada. */
+  isRetry: boolean;
+  /** Se a sessão realmente rebaixou o tópico. Errar no primeiro degrau
    *  antecipa a volta sem descer nada — não há degrau abaixo dele. */
   demoted: boolean;
-  /** Dias até a próxima revisão. 1 = amanhã. */
+  /** Dias até a próxima revisão agendada. 1 = amanhã. */
   days: number;
+  /** Minutos até a repescagem, quando existe uma. */
+  retryMinutes: number | null;
   /** Modalidade que a próxima revisão vai cobrar. */
   nextTitle: string;
   nextIcon: string;
   nextColor: string;
 }
 
+type Client = Awaited<ReturnType<typeof createClient>>;
+
 async function topicCaps(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: Client,
   topicId: string,
   exercisePrompt: string
 ): Promise<TopicCaps> {
@@ -55,15 +63,19 @@ async function topicCaps(
   };
 }
 
-// Registra uma sessão de revisão e reagenda o tópico. Chamada pelos runners no
-// fim da sessão — inclusive quando a revisão foi aberta pela página do tópico e
-// não pela fila de hoje: revisão é revisão, e o app não tinha como saber disso
-// até agora.
+function daysUntil(date: Date, now: Date): number {
+  return Math.max(1, Math.round((date.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
+}
+
+// Registra uma sessão e reagenda o tópico. Chamada pelos runners no fim da
+// sessão — inclusive quando a revisão foi aberta pela página do tópico e não
+// pela fila: revisão é revisão, e o app não tinha como saber disso até o 0014.
 export async function recordReview(
   topicId: string,
   mode: ReviewMode,
   hits: number,
-  total: number
+  total: number,
+  grade: Grade
 ): Promise<ReviewOutcome | null> {
   const supabase = await createClient();
   const {
@@ -75,21 +87,38 @@ export async function recordReview(
   // que agendar.
   const { data: topic } = await supabase
     .from('topics')
-    .select('id, review_step, due_at, exercise_prompt')
+    .select('id, review_step, due_at, retry_at, interval_days, exercise_prompt')
     .eq('id', topicId)
     .single();
   if (!topic) return null;
 
+  const now = new Date();
   const rung = rungOf(mode);
-  const passed = passedByScore(hits, total);
   const stepBefore = topic.review_step as number;
+  const dueAt = new Date(topic.due_at as string);
 
-  const next = nextSchedule({
-    step: stepBefore,
-    rung,
-    passed,
-    dueAt: new Date(topic.due_at as string),
-  });
+  // Repescagem é toda sessão que acontece com uma pendente e com a revisão de
+  // verdade ainda no futuro. Ela registra e devolve outra chance, mas não toca
+  // em degrau nem em vencimento: acertar 40 minutos depois de reler prova que
+  // você recodificou, não que fixou — voltar amanhã num degrau mais fácil
+  // continua sendo o tratamento certo.
+  const isRetry = topic.retry_at !== null && dueAt > now;
+
+  const next = isRetry
+    ? {
+        step: stepBefore,
+        dueAt,
+        intervalDays: topic.interval_days as number,
+        retryAt: grade === 'again' ? addMinutes(now, DEFAULT_RETRY_MINUTES) : null,
+      }
+    : nextSchedule({
+        step: stepBefore,
+        rung,
+        grade,
+        dueAt,
+        intervalDays: topic.interval_days as number,
+        now,
+      });
 
   const { error: insertError } = await supabase.from('topic_reviews').insert({
     user_id: user.id,
@@ -98,7 +127,9 @@ export async function recordReview(
     rung,
     hits,
     total,
-    passed,
+    grade,
+    passed: grade !== 'again',
+    is_retry: isRetry,
     step_before: stepBefore,
     step_after: next.step,
   });
@@ -106,7 +137,12 @@ export async function recordReview(
 
   const { error } = await supabase
     .from('topics')
-    .update({ review_step: next.step, due_at: next.dueAt.toISOString() })
+    .update({
+      review_step: next.step,
+      due_at: next.dueAt.toISOString(),
+      interval_days: next.intervalDays,
+      retry_at: next.retryAt?.toISOString() ?? null,
+    })
     .eq('id', topicId);
   if (error) throw error;
 
@@ -115,19 +151,50 @@ export async function recordReview(
 
   const caps = await topicCaps(supabase, topicId, topic.exercise_prompt as string);
   const nextRung = LADDER[resolveRung(next.step, caps)];
-  const days = Math.max(
-    1,
-    Math.round((next.dueAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
-  );
 
   return {
-    passed,
+    grade,
+    isRetry,
     demoted: next.step < stepBefore,
-    days,
+    days: daysUntil(next.dueAt, now),
+    retryMinutes: next.retryAt
+      ? Math.max(1, Math.round((next.retryAt.getTime() - now.getTime()) / 60000))
+      : null,
     nextTitle: nextRung.title,
     nextIcon: nextRung.icon,
     nextColor: nextRung.color,
   };
+}
+
+// Troca o horário da repescagem. O app propõe 10 minutos e quem estudou ajusta
+// — é a metade da classificação que pertence ao usuário. Só vale enquanto a
+// revisão agendada ainda está no futuro: no dia seguinte a escada assume.
+export async function setRetry(topicId: string, minutes: number): Promise<number | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Não autenticado');
+
+  const { data: topic } = await supabase
+    .from('topics')
+    .select('id, due_at')
+    .eq('id', topicId)
+    .single();
+  if (!topic) return null;
+
+  const now = new Date();
+  if (new Date(topic.due_at as string) <= now) return null;
+
+  const safe = Math.min(Math.max(Math.round(minutes), 1), 12 * 60);
+  const { error } = await supabase
+    .from('topics')
+    .update({ retry_at: addMinutes(now, safe).toISOString() })
+    .eq('id', topicId);
+  if (error) throw error;
+
+  revalidatePath('/today');
+  return safe;
 }
 
 export interface TodayItem {
@@ -144,6 +211,8 @@ export interface TodayItem {
 
 export interface TodayQueue {
   items: TodayItem[];
+  /** Repescagens prontas. Ficam fora do teto diário de propósito. */
+  retries: TodayItem[];
   /** Vencidos que ficaram de fora pelo teto diário. */
   waiting: number;
   /** Quando o próximo tópico vence, quando não há nada vencido hoje. */
@@ -171,28 +240,109 @@ function hrefFor(mode: ReviewMode, topicId: string, sectionId: string): string {
   }
 }
 
+type TopicRow = {
+  id: string;
+  name: string;
+  section_id: string;
+  review_step: number;
+  due_at: string;
+  exercise_prompt: string;
+};
+
+// Conta o material de vários tópicos de uma vez, pra resolver o degrau de cada
+// um sem uma consulta por tópico.
+async function capsFor(supabase: Client, ids: string[]): Promise<Map<string, TopicCaps>> {
+  const caps = new Map<string, TopicCaps>();
+  if (!ids.length) return caps;
+
+  const idList = ids.join(',');
+  const [{ data: cards }, { data: discursive }, { data: contrasts }] = await Promise.all([
+    supabase.from('cards').select('topic_id').in('topic_id', ids),
+    supabase.from('discursive_questions').select('topic_id').in('topic_id', ids),
+    supabase
+      .from('topic_contrasts')
+      .select('topic_a, topic_b')
+      .or(`topic_a.in.(${idList}),topic_b.in.(${idList})`),
+  ]);
+
+  for (const id of ids) {
+    caps.set(id, { cardsN: 0, discN: 0, contrastsN: 0, hasExercise: false });
+  }
+  for (const c of cards ?? []) {
+    const entry = caps.get(c.topic_id as string);
+    if (entry) entry.cardsN += 1;
+  }
+  for (const d of discursive ?? []) {
+    const entry = caps.get(d.topic_id as string);
+    if (entry) entry.discN += 1;
+  }
+  // O `or` traz o par inteiro, inclusive o lado que não está na lista — por
+  // isso só o lado pedido é contado.
+  for (const c of contrasts ?? []) {
+    for (const side of [c.topic_a as string, c.topic_b as string]) {
+      const entry = caps.get(side);
+      if (entry) entry.contrastsN += 1;
+    }
+  }
+  return caps;
+}
+
+function toItem(
+  row: TopicRow,
+  caps: Map<string, TopicCaps>,
+  sectionNames: Map<string, string>,
+  now: Date
+): TodayItem {
+  const cap = caps.get(row.id) ?? { cardsN: 0, discN: 0, contrastsN: 0, hasExercise: false };
+  cap.hasExercise = Boolean(row.exercise_prompt?.trim());
+  const rungIndex = resolveRung(row.review_step, cap);
+  const rung = LADDER[rungIndex];
+  return {
+    topicId: row.id,
+    topicName: row.name,
+    sectionId: row.section_id,
+    sectionName: sectionNames.get(row.section_id) ?? '',
+    rung,
+    rungIndex,
+    overdue: overdueDays(new Date(row.due_at), now),
+    href: hrefFor(rung.mode, row.id, row.section_id),
+  };
+}
+
 // A fila do dia: o que venceu, na modalidade certa, já ordenado e cortado no
 // teto. É a tela que responde "o que eu reviso hoje" sem exigir nenhuma decisão
-// de quem chega.
+// de quem chega. As repescagens vêm à parte, fora do teto.
 export async function getTodayQueue(): Promise<TodayQueue> {
   const supabase = await createClient();
   const now = new Date();
+  const nowISO = now.toISOString();
+  const columns = 'id, name, section_id, review_step, due_at, exercise_prompt';
 
-  const { count: totalTopics } = await supabase
-    .from('topics')
-    .select('id', { count: 'exact', head: true });
-
-  const { data: due, error } = await supabase
-    .from('topics')
-    .select('id, name, section_id, review_step, due_at, exercise_prompt')
-    .lte('due_at', now.toISOString())
-    .order('due_at', { ascending: true })
-    .order('created_at', { ascending: true });
+  const [{ count: totalTopics }, { data: due, error }, { data: retryRows }] = await Promise.all([
+    supabase.from('topics').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('topics')
+      .select(columns)
+      .lte('due_at', nowISO)
+      .order('due_at', { ascending: true })
+      .order('created_at', { ascending: true }),
+    // A repescagem só existe enquanto a revisão de verdade não venceu. É o que
+    // a mantém limitada ao dia sem nenhuma rotina de limpeza: amanhã o `due_at`
+    // passa, o tópico entra na fila principal e ela some sozinha.
+    supabase
+      .from('topics')
+      .select(columns)
+      .not('retry_at', 'is', null)
+      .lte('retry_at', nowISO)
+      .gt('due_at', nowISO)
+      .order('retry_at', { ascending: true }),
+  ]);
   if (error) throw error;
 
-  const rows = due ?? [];
+  const rows = (due ?? []) as TopicRow[];
+  const retryReady = (retryRows ?? []) as TopicRow[];
 
-  if (!rows.length) {
+  if (!rows.length && !retryReady.length) {
     const { data: upcoming } = await supabase
       .from('topics')
       .select('due_at')
@@ -200,6 +350,7 @@ export async function getTodayQueue(): Promise<TodayQueue> {
       .limit(1);
     return {
       items: [],
+      retries: [],
       waiting: 0,
       nextDueAt: (upcoming?.[0]?.due_at as string) ?? null,
       totalTopics: totalTopics ?? 0,
@@ -208,77 +359,42 @@ export async function getTodayQueue(): Promise<TodayQueue> {
 
   // Só o topo da fila precisa do material contado: o teto corta o resto de
   // qualquer jeito. Uma folga sobre o teto cobre a margem.
-  const head = rows.slice(0, DAILY_CAP * 3);
-  const ids = head.map((t) => t.id as string);
-  const idList = ids.join(',');
-  const sectionIds = [...new Set(head.map((t) => t.section_id as string))];
+  const head = rows.slice(0, DAILY_CAP);
+  const relevant = [...head, ...retryReady];
+  const sectionIds = [...new Set(relevant.map((t) => t.section_id))];
 
-  const [{ data: cards }, { data: discursive }, { data: contrasts }, { data: sections }] =
-    await Promise.all([
-      supabase.from('cards').select('topic_id').in('topic_id', ids),
-      supabase.from('discursive_questions').select('topic_id').in('topic_id', ids),
-      supabase
-        .from('topic_contrasts')
-        .select('topic_a, topic_b')
-        .or(`topic_a.in.(${idList}),topic_b.in.(${idList})`),
-      supabase.from('sections').select('id, name').in('id', sectionIds),
-    ]);
-
-  const cardCounts = new Map<string, number>();
-  for (const c of cards ?? []) cardCounts.set(c.topic_id, (cardCounts.get(c.topic_id) ?? 0) + 1);
-  const discCounts = new Map<string, number>();
-  for (const d of discursive ?? []) discCounts.set(d.topic_id, (discCounts.get(d.topic_id) ?? 0) + 1);
-
-  // O `or` acima traz o par inteiro, inclusive o lado que não está na fila —
-  // por isso o contador só soma o lado que é candidato de hoje.
-  const candidates = new Set(ids);
-  const contrastCounts = new Map<string, number>();
-  for (const c of contrasts ?? []) {
-    for (const side of [c.topic_a as string, c.topic_b as string]) {
-      if (candidates.has(side)) contrastCounts.set(side, (contrastCounts.get(side) ?? 0) + 1);
-    }
-  }
-
+  const [caps, { data: sections }] = await Promise.all([
+    capsFor(
+      supabase,
+      relevant.map((t) => t.id)
+    ),
+    supabase.from('sections').select('id, name').in('id', sectionIds),
+  ]);
   const sectionNames = new Map((sections ?? []).map((s) => [s.id as string, s.name as string]));
 
-  const items: TodayItem[] = head.slice(0, DAILY_CAP).map((t) => {
-    const topicId = t.id as string;
-    const sectionId = t.section_id as string;
-    const caps: TopicCaps = {
-      cardsN: cardCounts.get(topicId) ?? 0,
-      discN: discCounts.get(topicId) ?? 0,
-      contrastsN: contrastCounts.get(topicId) ?? 0,
-      hasExercise: Boolean((t.exercise_prompt as string)?.trim()),
-    };
-    const rungIndex = resolveRung(t.review_step as number, caps);
-    const rung = LADDER[rungIndex];
-    return {
-      topicId,
-      topicName: t.name as string,
-      sectionId,
-      sectionName: sectionNames.get(sectionId) ?? '',
-      rung,
-      rungIndex,
-      overdue: overdueDays(new Date(t.due_at as string), now),
-      href: hrefFor(rung.mode, topicId, sectionId),
-    };
-  });
-
   return {
-    items,
-    waiting: Math.max(0, rows.length - items.length),
+    items: head.map((row) => toItem(row, caps, sectionNames, now)),
+    retries: retryReady.map((row) => toItem(row, caps, sectionNames, now)),
+    waiting: Math.max(0, rows.length - head.length),
     nextDueAt: null,
     totalTopics: totalTopics ?? 0,
   };
 }
 
 // Usado só pelo contador do header — mais barato que montar a fila inteira. O
-// número é capado no teto porque é isso que a fila vai realmente oferecer.
+// número de vencidos é capado no teto porque é isso que a fila vai oferecer; a
+// repescagem soma por fora, que é justamente o ponto dela.
 export async function countDueToday(): Promise<number> {
   const supabase = await createClient();
-  const { count } = await supabase
-    .from('topics')
-    .select('id', { count: 'exact', head: true })
-    .lte('due_at', new Date().toISOString());
-  return Math.min(count ?? 0, DAILY_CAP);
+  const nowISO = new Date().toISOString();
+  const [{ count: dueCount }, { count: retryCount }] = await Promise.all([
+    supabase.from('topics').select('id', { count: 'exact', head: true }).lte('due_at', nowISO),
+    supabase
+      .from('topics')
+      .select('id', { count: 'exact', head: true })
+      .not('retry_at', 'is', null)
+      .lte('retry_at', nowISO)
+      .gt('due_at', nowISO),
+  ]);
+  return Math.min(dueCount ?? 0, DAILY_CAP) + (retryCount ?? 0);
 }

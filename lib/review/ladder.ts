@@ -83,17 +83,66 @@ export const LAST_RUNG = LADDER.length - 1;
 // teto é o que protege a rotina, não o que a limita.
 export const DAILY_CAP = 5;
 
-// Uma sessão passa com 80% de acerto. Exigir 100% transformaria um deslize em
-// rebaixamento; aceitar metade deixaria subir sem saber.
-export const PASS_RATIO = 0.8;
+// Como a sessão foi, na voz de quem estudou. O degrau diz que tipo de teste é
+// hoje; o grau diz como ele saiu — dois eixos independentes.
+//
+// Antes disso a medição era binária (80% passa), o que jogava fora a diferença
+// entre "saiu limpo" e "saiu suando" e não dava voz nenhuma nas modalidades sem
+// placar, onde o app estava adivinhando.
+export type Grade = 'again' | 'hard' | 'good' | 'easy';
+
+export interface GradeDef {
+  key: Grade;
+  label: string;
+  hint: string;
+  color: string;
+  tint: string;
+}
+
+export const GRADES: GradeDef[] = [
+  { key: 'again', label: 'Errei', hint: 'Volta em minutos, e amanhã um degrau abaixo', color: '#EF4444', tint: '#FDECEA' },
+  { key: 'hard', label: 'Difícil', hint: 'Saiu com esforço — fica no mesmo degrau, volta antes', color: '#D97706', tint: '#FDF0DC' },
+  { key: 'good', label: 'Bom', hint: 'Saiu limpo — sobe um degrau', color: '#0E9F6E', tint: '#E1FAEF' },
+  { key: 'easy', label: 'Fácil', hint: 'Nem precisou pensar — sobe e estica o intervalo', color: '#0891A5', tint: '#E0F7FB' },
+];
+
+export const GRADE_BY_KEY = new Map(GRADES.map((g) => [g.key, g]));
+
+// "Difícil" encurta o intervalo do degrau, "Fácil" estica. Fatores modestos de
+// propósito: quem grada é uma pessoa cansada no fim de uma revisão, e um
+// multiplicador agressivo transforma um clique impreciso em duas semanas de
+// diferença.
+export const HARD_FACTOR = 0.5;
+export const EASY_FACTOR = 1.5;
+
+// No último degrau o intervalo cresce sobre o anterior em vez de ficar preso
+// nos 60 dias da LADDER — é o único ponto onde a escada vira multiplicativa,
+// porque é o único onde ela pararia de crescer.
+export const TOP_GROWTH: Record<Exclude<Grade, 'again'>, number> = { hard: 1.2, good: 2, easy: 2.6 };
+export const MAX_INTERVAL_DAYS = 365;
+
+// Repescagem: a segunda chance no mesmo dia. Só aparece depois de um "Errei".
+export const RETRY_OPTIONS = [
+  { minutes: 10, label: '10 min' },
+  { minutes: 60, label: '1 hora' },
+  { minutes: 240, label: 'mais tarde' },
+];
+export const DEFAULT_RETRY_MINUTES = 10;
 
 export function rungOf(mode: ReviewMode): number {
   const i = LADDER.findIndex((r) => r.mode === mode);
   return i < 0 ? 0 : i;
 }
 
-export function passedByScore(hits: number, total: number): boolean {
-  return total > 0 && hits / total >= PASS_RATIO;
+// Nas modalidades com placar o app chega com um grau já escolhido e a pessoa
+// só corrige se discordar. "Fácil" nunca é sugerido: ele estica o intervalo, e
+// isso é uma afirmação que tem que partir de quem estudou.
+export function suggestGrade(hits: number, total: number): Grade {
+  if (total <= 0) return 'again';
+  const ratio = hits / total;
+  if (ratio < 0.8) return 'again';
+  if (ratio < 1) return 'hard';
+  return 'good';
 }
 
 // O que o tópico tem material para cobrar. Um degrau sem material não é
@@ -132,8 +181,14 @@ export function resolveRung(step: number, caps: TopicCaps): number {
   return 0;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function addDays(from: Date, days: number): Date {
-  return new Date(from.getTime() + days * 24 * 60 * 60 * 1000);
+  return new Date(from.getTime() + days * DAY_MS);
+}
+
+export function addMinutes(from: Date, minutes: number): Date {
+  return new Date(from.getTime() + minutes * 60 * 1000);
 }
 
 export interface ScheduleInput {
@@ -141,30 +196,70 @@ export interface ScheduleInput {
   step: number;
   /** Degrau que a sessão cobrou. */
   rung: number;
-  passed: boolean;
+  grade: Grade;
   /** Vencimento atual do tópico. */
   dueAt: Date;
+  /** Intervalo concedido na última revisão, em dias. 0 = nunca agendado. */
+  intervalDays: number;
   now?: Date;
 }
 
-// Passou: sobe pro degrau seguinte ao que foi cobrado e espera o intervalo dele.
-// Os `max` existem por causa da revisão fora da fila — refazer o quiz ou abrir
-// os cartões por vontade própria nunca pode encurtar o intervalo já conquistado
-// nem saltar degraus que ainda não foram cobrados.
-//
-// Falhou: desce pra baixo do degrau que caiu e volta amanhã, sem `max` nenhum —
-// um erro é notícia mesmo quando o tópico só venceria daqui a um mês.
-export function nextSchedule({ step, rung, passed, dueAt, now = new Date() }: ScheduleInput): {
+export interface Schedule {
   step: number;
   dueAt: Date;
-} {
-  if (!passed) {
-    return { step: Math.min(step, Math.max(0, rung - 1)), dueAt: addDays(now, 1) };
+  intervalDays: number;
+  /** Quando a repescagem fica disponível. `null` quando não há uma. */
+  retryAt: Date | null;
+}
+
+// Quanto esperar depois de um grau que não foi "Errei".
+function waitFor(rung: number, grade: Exclude<Grade, 'again'>, intervalDays: number): number {
+  const base = LADDER[rung]?.waitDays ?? 1;
+  if (rung !== LAST_RUNG) {
+    if (grade === 'hard') return Math.max(1, Math.round(base * HARD_FACTOR));
+    if (grade === 'easy') return Math.round(base * EASY_FACTOR);
+    return base;
   }
-  const next = addDays(now, LADDER[rung]?.waitDays ?? 1);
+  // Último degrau: cresce sobre o intervalo anterior, com o piso do degrau.
+  const previous = intervalDays > 0 ? intervalDays : base;
+  return Math.min(MAX_INTERVAL_DAYS, Math.max(base, Math.round(previous * TOP_GROWTH[grade])));
+}
+
+// Errei: desce pra baixo do degrau que caiu, volta amanhã e abre repescagem
+// para hoje ainda. Não tem `max` nenhum — um erro é notícia mesmo quando o
+// tópico só venceria daqui a um mês.
+//
+// Difícil: fica no degrau, volta antes. Bom e Fácil sobem, mudando só o quanto
+// o intervalo estica.
+//
+// Os `max` nos três últimos existem por causa da revisão fora da fila: refazer
+// o quiz por vontade própria nunca pode encurtar um intervalo já conquistado
+// nem saltar degraus que ainda não foram cobrados.
+export function nextSchedule({
+  step,
+  rung,
+  grade,
+  dueAt,
+  intervalDays,
+  now = new Date(),
+}: ScheduleInput): Schedule {
+  if (grade === 'again') {
+    return {
+      step: Math.min(step, Math.max(0, rung - 1)),
+      dueAt: addDays(now, 1),
+      intervalDays: 1,
+      retryAt: addMinutes(now, DEFAULT_RETRY_MINUTES),
+    };
+  }
+
+  const candidate = addDays(now, waitFor(rung, grade, intervalDays));
+  const due = candidate > dueAt ? candidate : dueAt;
   return {
-    step: Math.min(LAST_RUNG, Math.max(step, rung + 1)),
-    dueAt: next > dueAt ? next : dueAt,
+    // "Difícil" não avança: ele repete o degrau que acabou de custar caro.
+    step: Math.min(LAST_RUNG, Math.max(step, grade === 'hard' ? rung : rung + 1)),
+    dueAt: due,
+    intervalDays: Math.max(1, Math.round((due.getTime() - now.getTime()) / DAY_MS)),
+    retryAt: null,
   };
 }
 
