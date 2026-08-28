@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { ReviewHint } from '@/components/ReviewHint';
 import { suggestGrade } from '@/lib/review/ladder';
 import { buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { ContrastDrillQuestion } from '@/lib/actions/contrasts';
@@ -29,6 +30,9 @@ export function DiscriminateRunner({
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  // Sticky pela sessão inteira: o preço é pago uma vez, e reabrir o cadeado a
+  // cada cenário só somaria cliques sem mudar o que já foi visto.
+  const [hintUsed, setHintUsed] = useState(false);
   const { outcome, pending, record, changeRetry, reset } = useReviewRecorder(reviewTopicId, 'discriminate');
 
   if (!questions.length) {
@@ -70,7 +74,8 @@ export function DiscriminateRunner({
         {reviewTopicId && !outcome && !pending ? (
           <GradeButtons
             suggested={suggestGrade(hits, questions.length)}
-            onGrade={(grade) => record(hits, questions.length, grade, false)}
+            capped={hintUsed}
+            onGrade={(grade) => record(hits, questions.length, grade, hintUsed)}
           />
         ) : (
           <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />
@@ -81,6 +86,7 @@ export function DiscriminateRunner({
               setIdx(0);
               setHits(0);
               setSelected(null);
+              setHintUsed(false);
               reset();
             }}
             className={buttonSecondaryClass}
@@ -129,6 +135,19 @@ export function DiscriminateRunner({
         <h3 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 21, lineHeight: 1.35, letterSpacing: '-.01em', margin: '0 0 20px' }}>
           <RichText text={q.situation} />
         </h3>
+
+        {/* A dica aqui é o "o que se confunde" do par, nunca a pergunta que
+            decide: essa é a chave da resposta e entregaria o exercício. O
+            confusion devolve só o eixo em que os dois se separam — aplicar o
+            eixo a este cenário continua sendo com você. */}
+        {!answered && q.confusion && (
+          <ReviewHint
+            hint={{ text: q.confusion }}
+            label="O que se confunde"
+            used={hintUsed}
+            onUse={() => setHintUsed(true)}
+          />
+        )}
 
         <div className="rcp-two-col" style={{ gap: 10 }}>
           {q.options.map((option, i) => {
