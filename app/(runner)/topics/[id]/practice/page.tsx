@@ -46,7 +46,15 @@ export default async function PracticePage({
       >
         <i className="ph ph-x" /> Sair da prática
       </Link>
-      <DiscursiveRunner items={items} backHref={backHref} topicId={topic.id} variant="practice" />
+      {/* Na prática o apoio é o código de referência do tópico, não o gabarito
+          do exercício — esse é a resposta, e revelar tem botão próprio. */}
+      <DiscursiveRunner
+        items={items}
+        backHref={backHref}
+        topicId={topic.id}
+        variant="practice"
+        hint={{ text: topic.code || topic.concept_what }}
+      />
     </div>
   );
 }

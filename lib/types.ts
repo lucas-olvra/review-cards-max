@@ -190,6 +190,8 @@ export interface TopicReview {
   passed: boolean;
   /** Sessão de repescagem: registra, mas não mexe na escada. */
   is_retry: boolean;
+  /** A dica foi aberta durante a tentativa — o grau foi limitado a "Difícil". */
+  used_hint: boolean;
   step_before: number;
   step_after: number;
   reviewed_at: string;

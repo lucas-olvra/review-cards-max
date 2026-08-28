@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import {
   addMinutes,
+  capGrade,
   DAILY_CAP,
   DEFAULT_RETRY_MINUTES,
   LADDER,
@@ -20,8 +21,20 @@ import {
 // O que o runner mostra no fim da sessão. Devolver isso é metade do ponto da
 // feature: a pessoa fecha a revisão já sabendo quando o tópico volta e o que
 // ele vai cobrar da próxima vez, em vez de ter que decidir isso sozinha.
-export interface ReviewOutcome {
+export interface ReviewInput {
+  mode: ReviewMode;
+  hits: number;
+  total: number;
   grade: Grade;
+  /** Se a dica foi aberta no meio da tentativa. Limita o grau a "Difícil". */
+  usedHint: boolean;
+}
+
+export interface ReviewOutcome {
+  /** Grau já com o teto da dica aplicado — pode ser menor que o escolhido. */
+  grade: Grade;
+  /** O teto da dica realmente rebaixou o grau escolhido. */
+  cappedByHint: boolean;
   /** Sessão de repescagem: registrou, mas não mexeu na escada. */
   isRetry: boolean;
   /** Se a sessão realmente rebaixou o tópico. Errar no primeiro degrau
@@ -72,10 +85,7 @@ function daysUntil(date: Date, now: Date): number {
 // pela fila: revisão é revisão, e o app não tinha como saber disso até o 0014.
 export async function recordReview(
   topicId: string,
-  mode: ReviewMode,
-  hits: number,
-  total: number,
-  grade: Grade
+  { mode, hits, total, grade: chosen, usedHint }: ReviewInput
 ): Promise<ReviewOutcome | null> {
   const supabase = await createClient();
   const {
@@ -95,6 +105,9 @@ export async function recordReview(
   const now = new Date();
   const rung = rungOf(mode);
   const stepBefore = topic.review_step as number;
+  // O teto da dica é reaplicado aqui de propósito: a interface já desabilita
+  // "Bom" e "Fácil", mas uma server action é alcançável por POST direto.
+  const grade = capGrade(chosen, usedHint);
   const dueAt = new Date(topic.due_at as string);
 
   // Repescagem é toda sessão que acontece com uma pendente e com a revisão de
@@ -130,6 +143,7 @@ export async function recordReview(
     grade,
     passed: grade !== 'again',
     is_retry: isRetry,
+    used_hint: usedHint,
     step_before: stepBefore,
     step_after: next.step,
   });
@@ -154,6 +168,7 @@ export async function recordReview(
 
   return {
     grade,
+    cappedByHint: grade !== chosen,
     isRetry,
     demoted: next.step < stepBefore,
     days: daysUntil(next.dueAt, now),

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { ReviewHint, type HintData } from '@/components/ReviewHint';
 import { buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { DiscursiveQuestion } from '@/lib/types';
 import { suggestGrade, type ReviewMode } from '@/lib/review/ladder';
@@ -30,6 +31,7 @@ const VARIANTS: Record<
     answerLabel: string;
     missingAnswer: string;
     empty: string;
+    hintLabel: string;
   }
 > = {
   discursive: {
@@ -45,6 +47,7 @@ const VARIANTS: Record<
     answerLabel: 'Resposta modelo',
     missingAnswer: 'Sem resposta modelo cadastrada.',
     empty: 'Sem perguntas discursivas para revisar ainda.',
+    hintLabel: 'Conceito',
   },
   practice: {
     mode: 'practice',
@@ -59,6 +62,7 @@ const VARIANTS: Record<
     answerLabel: 'Gabarito',
     missingAnswer: 'Sem gabarito cadastrado.',
     empty: 'Este tópico ainda não tem exercício de prática.',
+    hintLabel: 'Código de referência',
   },
 };
 
@@ -67,16 +71,19 @@ export function DiscursiveRunner({
   backHref,
   topicId,
   variant = 'discursive',
+  hint,
 }: {
   items: DiscursiveQuestion[];
   backHref: string;
   topicId: string;
   variant?: Variant;
+  hint?: HintData;
 }) {
   const v = VARIANTS[variant];
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [hintUsed, setHintUsed] = useState(false);
   const { outcome, pending, record, changeRetry } = useReviewRecorder(topicId, v.mode);
 
   if (!items.length) {
@@ -114,7 +121,8 @@ export function DiscursiveRunner({
         {!outcome && !pending ? (
           <GradeButtons
             suggested={suggestGrade(hits, items.length)}
-            onGrade={(grade) => record(hits, items.length, grade)}
+            capped={hintUsed}
+            onGrade={(grade) => record(hits, items.length, grade, hintUsed)}
           />
         ) : (
           <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />
@@ -164,6 +172,10 @@ export function DiscursiveRunner({
         <h3 className="rcp-font-display" style={{ fontWeight: 600, fontSize: 21, lineHeight: 1.3, letterSpacing: '-.01em', margin: '0 0 18px' }}>
           <RichText text={item.question} />
         </h3>
+
+        {!revealed && hint && (
+          <ReviewHint hint={hint} label={v.hintLabel} used={hintUsed} onUse={() => setHintUsed(true)} />
+        )}
 
         {!revealed ? (
           <div style={{ borderRadius: 14, padding: 22, background: '#FAFAF8', border: '1.5px dashed rgba(0,0,0,.14)', textAlign: 'center' }}>
