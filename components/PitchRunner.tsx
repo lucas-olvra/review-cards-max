@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { HintContent, ReviewHint, hasHint, type HintData } from '@/components/ReviewHint';
 import { accent, buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 
 const DURATION = 30;
@@ -16,15 +17,18 @@ export function PitchRunner({
   backHref,
   topicId,
   decisiveQuestion = '',
+  hint,
 }: {
   topicName: string;
   pitch: string;
   backHref: string;
   topicId: string;
   decisiveQuestion?: string;
+  hint?: HintData;
 }) {
   const [phase, setPhase] = useState<'idle' | 'running' | 'revealed'>('idle');
   const [remaining, setRemaining] = useState(DURATION);
+  const [hintUsed, setHintUsed] = useState(false);
   // Explicar em voz alta não tem placar automático — quem sabe se travou é
   // quem falou. Os quatro graus abaixo são o único sinal, e sem eles a sessão
   // não é registrada: gravar "passou" por omissão inflaria a escada. Aqui
@@ -51,6 +55,7 @@ export function PitchRunner({
   const restart = () => {
     setRemaining(DURATION);
     setPhase('idle');
+    setHintUsed(false);
     reset();
   };
 
@@ -158,6 +163,12 @@ export function PitchRunner({
             <p style={{ fontSize: 15, color: '#6B6862', margin: '0 0 20px' }}>
               Fale sem parar. Estruture: o que é → por que → exemplo.
             </p>
+            {/* O apoio existe pra travamento por detalhe, que era o buraco de
+                "explique sem olhar": travar por uma peça derrubava a sessão
+                inteira. Ele custa o teto de "Difícil" — ver ReviewHint. */}
+            {hint && (
+              <ReviewHint hint={hint} label="Analogia visual" used={hintUsed} onUse={() => setHintUsed(true)} />
+            )}
             <button onClick={() => setPhase('revealed')} className={buttonSecondaryClass} style={{ borderRadius: 999 }}>
               Terminei / Pular
             </button>
@@ -178,8 +189,19 @@ export function PitchRunner({
                 <em style={{ color: '#86827A' }}>Sem resumo salvo.</em>
               )}
             </div>
+            {/* Aqui já não há medição em jogo, então a analogia aparece sem
+                cobrar nada: reencontrar a estrutura logo depois de tentar
+                recuperá-la é exatamente o que fixa. */}
+            {hint && hasHint(hint) && !hintUsed && (
+              <div style={{ margin: '0 0 22px' }}>
+                <HintContent hint={hint} label="Analogia visual" />
+              </div>
+            )}
             {!outcome && !pending ? (
-              <GradeButtons onGrade={(grade) => record(grade === 'again' ? 0 : 1, 1, grade)} />
+              <GradeButtons
+                capped={hintUsed}
+                onGrade={(grade) => record(grade === 'again' ? 0 : 1, 1, grade, hintUsed)}
+              />
             ) : (
               <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />
             )}

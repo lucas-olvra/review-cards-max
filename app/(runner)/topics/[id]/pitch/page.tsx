@@ -18,6 +18,13 @@ export default async function PitchPage({
 
   const backHref = safeInternalHref(from, `/topics/${id}`);
 
+  // A analogia visual é o apoio certo pra este degrau: ela devolve a estrutura
+  // do conceito sem entregar as palavras da explicação. Sem diagrama, o "o que
+  // é" faz o papel — pior, porque entrega mais, mas melhor que nada.
+  const hint = topic.analogy_diagram.shapes.length
+    ? { diagram: topic.analogy_diagram, caption: topic.analogy_caption }
+    : { text: topic.concept_what };
+
   return (
     <div style={{ maxWidth: 620, margin: '0 auto', padding: '26px 26px 90px' }}>
       <Link
@@ -32,6 +39,7 @@ export default async function PitchPage({
         backHref={backHref}
         topicId={topic.id}
         decisiveQuestion={topic.decisive_question}
+        hint={hint}
       />
     </div>
   );

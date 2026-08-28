@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from 'react';
 import { motion } from 'motion/react';
 import { recordReview, setRetry, type ReviewOutcome } from '@/lib/actions/reviews';
-import { GRADES, RETRY_OPTIONS, type Grade, type ReviewMode } from '@/lib/review/ladder';
+import { capGrade, GRADES, RETRY_OPTIONS, type Grade, type ReviewMode } from '@/lib/review/ladder';
 
 // Registro da sessão, compartilhado pelos cinco runners. O `useRef` é o que
 // impede a dupla gravação: a tela de resultado pode re-renderizar (transição,
@@ -14,11 +14,11 @@ export function useReviewRecorder(topicId: string | undefined, mode: ReviewMode)
   const recorded = useRef(false);
 
   const record = useCallback(
-    (hits: number, total: number, grade: Grade) => {
+    (hits: number, total: number, grade: Grade, usedHint: boolean) => {
       if (!topicId || recorded.current) return;
       recorded.current = true;
       startTransition(async () => {
-        setOutcome(await recordReview(topicId, mode, hits, total, grade));
+        setOutcome(await recordReview(topicId, { mode, hits, total, grade, usedHint }));
       });
     },
     [topicId, mode]
@@ -52,12 +52,18 @@ export function useReviewRecorder(topicId: string | undefined, mode: ReviewMode)
 export function GradeButtons({
   suggested,
   onGrade,
+  capped = false,
 }: {
   suggested?: Grade;
   onGrade: (grade: Grade) => void;
+  /** A dica foi aberta: "Bom" e "Fácil" saem de cena nesta sessão. */
+  capped?: boolean;
 }) {
   const [hovered, setHovered] = useState<Grade | null>(null);
-  const shown = GRADES.find((g) => g.key === (hovered ?? suggested));
+  // Com a dica aberta a sugestão desce junto — deixar "Bom" destacado e
+  // desabilitado ao mesmo tempo seria só confuso.
+  const pick = suggested ? capGrade(suggested, capped) : undefined;
+  const shown = GRADES.find((g) => g.key === (hovered ?? pick));
 
   return (
     <div style={{ margin: '0 0 20px' }}>
@@ -66,26 +72,29 @@ export function GradeButtons({
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {GRADES.map((g) => {
-          const isSuggested = g.key === suggested;
+          const blocked = capped && (g.key === 'good' || g.key === 'easy');
+          const isSuggested = g.key === pick;
           return (
             <button
               key={g.key}
               type="button"
+              disabled={blocked}
+              title={blocked ? 'Indisponível: você abriu a dica nesta sessão' : undefined}
               onClick={() => onGrade(g.key)}
-              onMouseEnter={() => setHovered(g.key)}
+              onMouseEnter={() => setHovered(blocked ? null : g.key)}
               onMouseLeave={() => setHovered(null)}
-              onFocus={() => setHovered(g.key)}
+              onFocus={() => setHovered(blocked ? null : g.key)}
               onBlur={() => setHovered(null)}
               style={{
                 flex: '1 1 88px',
-                cursor: 'pointer',
+                cursor: blocked ? 'not-allowed' : 'pointer',
                 padding: '11px 10px',
                 borderRadius: 13,
-                background: isSuggested ? g.color : g.tint,
-                color: isSuggested ? '#fff' : g.color,
-                border: `1.5px solid ${isSuggested ? g.color : 'transparent'}`,
+                background: blocked ? '#F2F0EB' : isSuggested ? g.color : g.tint,
+                color: blocked ? '#C9C4BB' : isSuggested ? '#fff' : g.color,
+                border: `1.5px solid ${!blocked && isSuggested ? g.color : 'transparent'}`,
                 font: '600 14px var(--font-body)',
-                boxShadow: isSuggested ? `0 8px 18px -10px ${g.color}` : 'none',
+                boxShadow: !blocked && isSuggested ? `0 8px 18px -10px ${g.color}` : 'none',
               }}
             >
               {g.label}
@@ -93,11 +102,9 @@ export function GradeButtons({
           );
         })}
       </div>
-      {shown && (
-        <p style={{ fontSize: 13, color: '#86827A', textAlign: 'center', margin: '10px 0 0', lineHeight: 1.5 }}>
-          {shown.hint}
-        </p>
-      )}
+      <p style={{ fontSize: 13, color: '#86827A', textAlign: 'center', margin: '10px 0 0', lineHeight: 1.5 }}>
+        {capped ? 'Você abriu a dica — esta sessão vai até "Difícil".' : shown?.hint}
+      </p>
     </div>
   );
 }
@@ -175,6 +182,12 @@ export function ReviewOutcomeBanner({
           <i className={outcome.nextIcon} style={{ fontSize: 13 }} /> {outcome.nextTitle}
         </span>
       </div>
+
+      {outcome.cappedByHint && (
+        <p style={{ fontSize: 12.5, color: '#8A5B08', textAlign: 'center', margin: '8px 0 0' }}>
+          <i className="ph ph-lightbulb" /> Limitado a &quot;Difícil&quot; porque a dica foi aberta.
+        </p>
+      )}
 
       {/* A repescagem é a metade da classificação que pertence a quem estudou:
           o app propõe 10 minutos e a pessoa ajusta, sem que isso desloque nada

@@ -70,7 +70,7 @@ export function DiscriminateRunner({
         {reviewTopicId && !outcome && !pending ? (
           <GradeButtons
             suggested={suggestGrade(hits, questions.length)}
-            onGrade={(grade) => record(hits, questions.length, grade)}
+            onGrade={(grade) => record(hits, questions.length, grade, false)}
           />
         ) : (
           <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />

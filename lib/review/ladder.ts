@@ -134,6 +134,19 @@ export function rungOf(mode: ReviewMode): number {
   return i < 0 ? 0 : i;
 }
 
+// Teto de quem abriu a dica no meio da tentativa. "Difícil" repete o degrau em
+// vez de subir: você destravou e aprendeu, mas com o material na tela — o que
+// não é evidência de recuperação, que é o que a escada mede.
+//
+// Sem esse teto a dica corroeria a medição em silêncio: grátis, quase todo
+// mundo abre e depois marca "Bom", e a escada infla sem ninguém mentir.
+export const HINT_CAP: Grade = 'hard';
+
+export function capGrade(grade: Grade, usedHint: boolean): Grade {
+  if (!usedHint) return grade;
+  return grade === 'good' || grade === 'easy' ? HINT_CAP : grade;
+}
+
 // Nas modalidades com placar o app chega com um grau já escolhido e a pessoa
 // só corrige se discordar. "Fácil" nunca é sugerido: ele estica o intervalo, e
 // isso é uma afirmação que tem que partir de quem estudou.

@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { RichText } from '@/lib/render';
 import { GradeButtons, ReviewOutcomeBanner, useReviewRecorder } from '@/components/ReviewOutcome';
+import { ReviewHint } from '@/components/ReviewHint';
 import { suggestGrade } from '@/lib/review/ladder';
-import { accent, buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
+import { buttonPrimaryClass, buttonSecondaryClass, cardClass } from '@/lib/ui';
 import type { Card } from '@/lib/types';
 
 const QUIZ_COLOR = '#0891A5';
@@ -25,6 +26,7 @@ export function QuizRunner({
   const [idx, setIdx] = useState(0);
   const [hits, setHits] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [hintUsed, setHintUsed] = useState(false);
   const { outcome, pending, record, changeRetry, reset } = useReviewRecorder(topicId, 'cards');
 
   if (!cards.length) {
@@ -66,7 +68,8 @@ export function QuizRunner({
         {!outcome && !pending ? (
           <GradeButtons
             suggested={suggestGrade(hits, cards.length)}
-            onGrade={(grade) => record(hits, cards.length, grade)}
+            capped={hintUsed}
+            onGrade={(grade) => record(hits, cards.length, grade, hintUsed)}
           />
         ) : (
           <ReviewOutcomeBanner outcome={outcome} pending={pending} onChangeRetry={changeRetry} />
@@ -77,6 +80,7 @@ export function QuizRunner({
               setIdx(0);
               setHits(0);
               setSelected(null);
+              setHintUsed(false);
               reset();
             }}
             className={buttonSecondaryClass}
@@ -111,18 +115,15 @@ export function QuizRunner({
         </span>
       </div>
 
-      {conceptWhat && (
-        <details className={cardClass} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
-          <summary
-            style={{ cursor: 'pointer', padding: '14px 18px', fontSize: 14, fontWeight: 600, color: accent, listStyle: 'none' }}
-          >
-            <i className="ph ph-clipboard-text" /> Consultar conceito
-          </summary>
-          <div style={{ borderTop: '1px solid rgba(0,0,0,.07)', padding: '14px 18px', fontSize: 14, color: '#35322D' }}>
-            <RichText text={conceptWhat} />
-          </div>
-        </details>
-      )}
+      {/* Era um "Consultar conceito" grátis, aberto durante a pergunta. Grátis
+          ele contaminava o placar em silêncio: consultar e depois marcar "Bom"
+          fazia a escada subir sem recuperação nenhuma. */}
+      <ReviewHint
+        hint={{ text: conceptWhat }}
+        label="Conceito"
+        used={hintUsed}
+        onUse={() => setHintUsed(true)}
+      />
 
       <motion.div
         key={idx}
