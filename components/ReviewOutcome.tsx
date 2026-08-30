@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState, useTransition } from 'react';
 import { motion } from 'motion/react';
-import { recordReview, setRetry, type ReviewOutcome } from '@/lib/actions/reviews';
+import { recordReview, setRetry, type PitchPayload, type ReviewOutcome } from '@/lib/actions/reviews';
 import { capGrade, GRADES, RETRY_OPTIONS, type Grade, type ReviewMode } from '@/lib/review/ladder';
 
 // Registro da sessão, compartilhado pelos cinco runners. O `useRef` é o que
@@ -14,11 +14,11 @@ export function useReviewRecorder(topicId: string | undefined, mode: ReviewMode)
   const recorded = useRef(false);
 
   const record = useCallback(
-    (hits: number, total: number, grade: Grade, usedHint: boolean) => {
+    (hits: number, total: number, grade: Grade, usedHint: boolean, pitch?: PitchPayload) => {
       if (!topicId || recorded.current) return;
       recorded.current = true;
       startTransition(async () => {
-        setOutcome(await recordReview(topicId, { mode, hits, total, grade, usedHint }));
+        setOutcome(await recordReview(topicId, { mode, hits, total, grade, usedHint, pitch }));
       });
     },
     [topicId, mode]

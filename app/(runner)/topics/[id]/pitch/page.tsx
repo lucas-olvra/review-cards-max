@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTopic } from '@/lib/actions/topics';
+import { getLastPitchHits } from '@/lib/actions/reviews';
 import { PitchRunner } from '@/components/PitchRunner';
 import { safeInternalHref } from '@/lib/nav';
 
@@ -15,6 +16,10 @@ export default async function PitchPage({
   const { from, day0 } = await searchParams;
   const topic = await getTopic(id);
   if (!topic) notFound();
+
+  // Como as três peças saíram da última vez: é o que permite dizer "segunda vez
+  // seguida sem o porquê" em vez de tratar cada sessão como a primeira.
+  const previousHits = await getLastPitchHits(id);
 
   const backHref = safeInternalHref(from, `/topics/${id}`);
 
@@ -40,6 +45,12 @@ export default async function PitchPage({
         topicId={topic.id}
         decisiveQuestion={topic.decisive_question}
         hint={hint}
+        reference={{
+          what: topic.concept_what,
+          why: topic.concept_why,
+          example: topic.use_cases,
+        }}
+        previousHits={previousHits}
         day0={day0 === '1'}
       />
     </div>

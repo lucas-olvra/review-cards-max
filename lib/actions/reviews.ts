@@ -17,6 +17,8 @@ import {
   type Rung,
   type TopicCaps,
 } from '@/lib/review/ladder';
+import { EMPTY_HITS, type PitchHits, type PitchSaid } from '@/lib/review/pitch';
+import type { PitchAttempt } from '@/lib/types';
 
 // O que o runner mostra no fim da sessão. Devolver isso é metade do ponto da
 // feature: a pessoa fecha a revisão já sabendo quando o tópico volta e o que
@@ -28,6 +30,13 @@ export interface ReviewInput {
   grade: Grade;
   /** Se a dica foi aberta no meio da tentativa. Limita o grau a "Difícil". */
   usedHint: boolean;
+  /** Só no degrau do pitch: as três peças produzidas e como elas saíram. */
+  pitch?: PitchPayload;
+}
+
+export interface PitchPayload {
+  said: PitchSaid;
+  hits: PitchHits;
 }
 
 export interface ReviewOutcome {
@@ -80,12 +89,97 @@ function daysUntil(date: Date, now: Date): number {
   return Math.max(1, Math.round((date.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
 }
 
+async function insertPitchAttempt(
+  supabase: Client,
+  userId: string,
+  topicId: string,
+  { said, hits }: PitchPayload,
+  reviewId: string | null
+) {
+  const { error } = await supabase.from('pitch_attempts').insert({
+    user_id: userId,
+    topic_id: topicId,
+    review_id: reviewId,
+    said_what: said.what,
+    said_why: said.why,
+    said_example: said.example,
+    hit_what: hits.what,
+    hit_why: hits.why,
+    hit_example: hits.example,
+  });
+  if (error) throw error;
+}
+
+// Tentativa do dia 0: fica guardada como linha de base, sem revisão atrelada —
+// o primeiro contato não alimenta a escada, mas é a primeira medida de onde a
+// explicação começou.
+export async function savePitchAttempt(topicId: string, pitch: PitchPayload): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Não autenticado');
+
+  await insertPitchAttempt(supabase, user.id, topicId, pitch, null);
+  revalidatePath(`/topics/${topicId}`);
+}
+
+// A tentativa anterior, usada só pra apontar a peça que falhou duas vezes
+// seguidas. Uma falha isolada é ruído; a mesma falha repetida é um buraco, e é
+// isso que vale dizer em voz alta pra quem está estudando.
+export async function getLastPitchHits(topicId: string): Promise<PitchHits | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('pitch_attempts')
+    .select('hit_what, hit_why, hit_example')
+    .eq('topic_id', topicId)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  const row = data?.[0];
+  if (!row) return null;
+  return {
+    ...EMPTY_HITS,
+    what: row.hit_what as boolean,
+    why: row.hit_why as boolean,
+    example: row.hit_example as boolean,
+  };
+}
+
+// As últimas tentativas do tópico, da mais recente pra mais antiga. Alimenta o
+// histórico da página do tópico, que é onde "estou melhorando?" deixa de ser
+// sensação: as suas versões da mesma peça, em sequência.
+export async function getPitchAttempts(topicId: string, limit = 3): Promise<PitchAttempt[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('pitch_attempts')
+    .select('id, created_at, said_what, said_why, said_example, hit_what, hit_why, hit_example')
+    .eq('topic_id', topicId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    created_at: row.created_at as string,
+    said: {
+      what: (row.said_what as string) ?? '',
+      why: (row.said_why as string) ?? '',
+      example: (row.said_example as string) ?? '',
+    },
+    hits: {
+      what: row.hit_what as boolean,
+      why: row.hit_why as boolean,
+      example: row.hit_example as boolean,
+    },
+  }));
+}
+
 // Registra uma sessão e reagenda o tópico. Chamada pelos runners no fim da
 // sessão — inclusive quando a revisão foi aberta pela página do tópico e não
 // pela fila: revisão é revisão, e o app não tinha como saber disso até o 0014.
 export async function recordReview(
   topicId: string,
-  { mode, hits, total, grade: chosen, usedHint }: ReviewInput
+  { mode, hits, total, grade: chosen, usedHint, pitch }: ReviewInput
 ): Promise<ReviewOutcome | null> {
   const supabase = await createClient();
   const {
@@ -133,21 +227,27 @@ export async function recordReview(
         now,
       });
 
-  const { error: insertError } = await supabase.from('topic_reviews').insert({
-    user_id: user.id,
-    topic_id: topicId,
-    mode,
-    rung,
-    hits,
-    total,
-    grade,
-    passed: grade !== 'again',
-    is_retry: isRetry,
-    used_hint: usedHint,
-    step_before: stepBefore,
-    step_after: next.step,
-  });
+  const { data: review, error: insertError } = await supabase
+    .from('topic_reviews')
+    .insert({
+      user_id: user.id,
+      topic_id: topicId,
+      mode,
+      rung,
+      hits,
+      total,
+      grade,
+      passed: grade !== 'again',
+      is_retry: isRetry,
+      used_hint: usedHint,
+      step_before: stepBefore,
+      step_after: next.step,
+    })
+    .select('id')
+    .single();
   if (insertError) throw insertError;
+
+  if (pitch) await insertPitchAttempt(supabase, user.id, topicId, pitch, review.id as string);
 
   const { error } = await supabase
     .from('topics')
