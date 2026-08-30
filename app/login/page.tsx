@@ -4,13 +4,19 @@ import { AuthBrandPanel } from '@/components/AuthBrandPanel';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SubmitButton } from '@/components/SubmitButton';
 import { AuthDivider, GoogleAuthButton } from '@/components/GoogleAuthButton';
+import { safeInternalHref } from '@/lib/nav';
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string }>;
+  searchParams: Promise<{ error?: string; message?: string; next?: string; expired?: string }>;
 }) {
   const params = await searchParams;
+  // O destino é validado aqui e não só na action: ele vira o `value` de um
+  // campo do formulário, e um `next` externo aqui já seria um link de saída.
+  const next = safeInternalHref(params.next, '/sections');
+  const hasNext = next !== '/sections';
+  const expired = params.expired === '1';
 
   return (
     <div className="rcp-auth-grid">
@@ -39,6 +45,40 @@ export default async function LoginPage({
             Acesse seus tópicos de estudo.
           </p>
 
+          {/* Sessão que morreu não é erro do usuário — daí o tom âmbar, e não
+              o vermelho de credencial inválida. */}
+          {expired && (
+            <p
+              style={{
+                marginBottom: 16,
+                borderRadius: 12,
+                background: '#FDF0DC',
+                color: '#8A5B08',
+                padding: 12,
+                fontSize: 14,
+                lineHeight: 1.55,
+              }}
+            >
+              <i className="ph-fill ph-clock-counter-clockwise" /> Sua sessão expirou. Entre de novo
+              — você volta direto pra onde estava.
+            </p>
+          )}
+          {!expired && hasNext && (
+            <p
+              style={{
+                marginBottom: 16,
+                borderRadius: 12,
+                background: '#E9ECFF',
+                color: '#2C4BE0',
+                padding: 12,
+                fontSize: 14,
+                lineHeight: 1.55,
+              }}
+            >
+              <i className="ph-fill ph-sign-in" /> Entre para continuar — você volta direto pra onde
+              estava.
+            </p>
+          )}
           {params.message && (
             <p
               style={{
@@ -68,10 +108,11 @@ export default async function LoginPage({
             </p>
           )}
 
-          <GoogleAuthButton label="Entrar com o Google" />
+          <GoogleAuthButton label="Entrar com o Google" next={hasNext ? next : undefined} />
           <AuthDivider />
 
           <form action={signIn} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {hasNext && <input type="hidden" name="next" value={next} />}
             <label style={{ display: 'block' }}>
               <span style={{ display: 'block', font: '500 13px var(--font-body)', color: '#55524B', marginBottom: 6 }}>
                 E-mail

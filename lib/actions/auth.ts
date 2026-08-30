@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { translateAuthError } from '@/lib/auth-errors';
+import { safeInternalHref } from '@/lib/nav';
 
 // A URL pública do app não é fixa (localhost em dev, domínio + alias de branch
 // na Vercel), e o OAuth do Google precisa dela para saber pra onde voltar.
@@ -20,12 +21,19 @@ export async function signIn(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
+  // `next` vem de um campo escondido do formulário, que por sua vez veio da
+  // URL — só destino interno é aceito, senão vira redirect aberto.
+  const next = safeInternalHref(formData.get('next') as string | undefined, '/sections');
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(translateAuthError(error.message))}`);
+    // O destino sobrevive a uma senha errada: perder o lugar por causa de um
+    // typo seria o mesmo problema que este commit resolve.
+    const params = new URLSearchParams({ error: translateAuthError(error.message) });
+    if (next !== '/sections') params.set('next', next);
+    redirect(`/login?${params}`);
   }
-  redirect('/sections');
+  redirect(next);
 }
 
 export async function signUp(formData: FormData) {
@@ -72,12 +80,15 @@ export async function signUp(formData: FormData) {
 // O fluxo do Google é OAuth: o Supabase devolve a URL de consentimento e o
 // retorno cai em /auth/callback, que troca o `code` pela sessão. Serve tanto
 // pra criar conta quanto pra entrar — quem já tem conta Google só entra.
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
   const supabase = await createClient();
+  const next = safeInternalHref(formData.get('next') as string | undefined, '/sections');
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${await siteOrigin()}/auth/callback?next=/sections` },
+    options: {
+      redirectTo: `${await siteOrigin()}/auth/callback?next=${encodeURIComponent(next)}`,
+    },
   });
 
   if (error || !data?.url) {

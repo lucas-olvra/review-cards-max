@@ -64,7 +64,23 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isAuthRoute && !isPublicRoute && !isAuthCallback) {
     const url = request.nextUrl.clone();
+    // Guarda onde a pessoa estava. Antes este redirect era mudo e o destino se
+    // perdia: você voltava depois de um tempo, caía numa tela de login sem
+    // explicação, e ainda tinha que procurar de novo onde estava.
+    const next = `${request.nextUrl.pathname}${request.nextUrl.search}`;
     url.pathname = '/login';
+    url.search = '';
+    url.searchParams.set('next', next);
+
+    // Ter cookie de sessão e mesmo assim não ter usuário significa que a sessão
+    // morreu (senha trocada em outro lugar, token revogado, projeto
+    // reiniciado). É diferente de quem nunca entrou e abriu uma URL protegida,
+    // e as duas situações merecem mensagens diferentes.
+    const hadSession = request.cookies
+      .getAll()
+      .some((c) => c.name.startsWith('sb-') && c.name.includes('auth-token'));
+    if (hadSession) url.searchParams.set('expired', '1');
+
     return NextResponse.redirect(url);
   }
 
