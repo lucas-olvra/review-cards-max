@@ -29,9 +29,10 @@ function GoogleMark() {
 // Um único botão serve pra entrar e pra criar conta: no OAuth do Google os dois
 // são o mesmo fluxo — o Supabase cria a conta na primeira vez e só autentica
 // nas seguintes. Por isso o rótulo muda, mas a ação é a mesma.
-export function GoogleAuthButton({ label }: { label: string }) {
+export function GoogleAuthButton({ label, next }: { label: string; next?: string }) {
   return (
     <form action={signInWithGoogle}>
+      {next && <input type="hidden" name="next" value={next} />}
       <SubmitButton
         pendingText="Abrindo o Google…"
         className="rcp-btn-google"
