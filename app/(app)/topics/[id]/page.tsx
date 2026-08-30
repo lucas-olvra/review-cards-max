@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTopic, getTopics, updateTopicPanel, deleteTopic } from '@/lib/actions/topics';
 import { getContrastCandidates, getContrastsForTopic } from '@/lib/actions/contrasts';
-import { isFirstDay } from '@/lib/actions/reviews';
+import { getPitchAttempts, isFirstDay } from '@/lib/actions/reviews';
 import { ContrastPanel } from '@/components/ContrastPanel';
 import { DecisionPanel } from '@/components/DecisionPanel';
 import { EditablePanel } from '@/components/EditablePanel';
@@ -11,6 +11,7 @@ import { CardsSection } from '@/components/CardsSection';
 import { DiscursiveSection } from '@/components/DiscursiveSection';
 import { TopicHeader } from '@/components/TopicHeader';
 import { Day0Block } from '@/components/Day0Block';
+import { PitchHistory } from '@/components/PitchHistory';
 import { TopicAudioPlayer } from '@/components/TopicAudioPlayer';
 import { ConfirmSubmitButton } from '@/components/ConfirmSubmitButton';
 import { buttonDangerClass } from '@/lib/ui';
@@ -27,10 +28,11 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
   const idx = topics.findIndex((t) => t.id === id);
   const palette = paletteFor(idx < 0 ? 0 : idx);
 
-  const [contrasts, candidates, firstDay] = await Promise.all([
+  const [contrasts, candidates, firstDay, pitchAttempts] = await Promise.all([
     getContrastsForTopic(id),
     getContrastCandidates(id, topic.section_id),
     isFirstDay(id, topic.due_at),
+    getPitchAttempts(id),
   ]);
 
   return (
@@ -194,6 +196,13 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
         >
           <i className="ph-fill ph-play" style={{ fontSize: 13 }} /> Praticar
         </Link>
+      </div>
+
+      {/* Logo abaixo do resumo de referência de propósito: o histórico é o que
+          diz se a explicação está fechando, e a decisão que ele provoca —
+          reescrever a peça que nunca fecha — se toma nos painéis acima. */}
+      <div style={{ margin: '14px 0 0' }}>
+        <PitchHistory attempts={pitchAttempts} />
       </div>
 
       <div style={{ margin: '14px 0 0' }}>

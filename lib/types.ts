@@ -1,4 +1,5 @@
 import type { Grade, ReviewMode } from '@/lib/review/ladder';
+import type { PitchHits, PitchSaid } from '@/lib/review/pitch';
 
 export interface AnalogyShape {
   id: string;
@@ -195,6 +196,16 @@ export interface TopicReview {
   step_before: number;
   step_after: number;
   reviewed_at: string;
+}
+
+// Uma explicação produzida no degrau do pitch, com a autoavaliação peça a peça
+// (migration 0022). Guardadas para responder "estou melhorando?" — a mesma peça
+// falhando de novo é o sinal que o degrau existe pra produzir.
+export interface PitchAttempt {
+  id: string;
+  created_at: string;
+  said: PitchSaid;
+  hits: PitchHits;
 }
 
 export interface ChangelogStep {

@@ -18,6 +18,7 @@ import {
   type TopicCaps,
 } from '@/lib/review/ladder';
 import { EMPTY_HITS, type PitchHits, type PitchSaid } from '@/lib/review/pitch';
+import type { PitchAttempt } from '@/lib/types';
 
 // O que o runner mostra no fim da sessão. Devolver isso é metade do ponto da
 // feature: a pessoa fecha a revisão já sabendo quando o tópico volta e o que
@@ -143,6 +144,34 @@ export async function getLastPitchHits(topicId: string): Promise<PitchHits | nul
     why: row.hit_why as boolean,
     example: row.hit_example as boolean,
   };
+}
+
+// As últimas tentativas do tópico, da mais recente pra mais antiga. Alimenta o
+// histórico da página do tópico, que é onde "estou melhorando?" deixa de ser
+// sensação: as suas versões da mesma peça, em sequência.
+export async function getPitchAttempts(topicId: string, limit = 3): Promise<PitchAttempt[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('pitch_attempts')
+    .select('id, created_at, said_what, said_why, said_example, hit_what, hit_why, hit_example')
+    .eq('topic_id', topicId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    created_at: row.created_at as string,
+    said: {
+      what: (row.said_what as string) ?? '',
+      why: (row.said_why as string) ?? '',
+      example: (row.said_example as string) ?? '',
+    },
+    hits: {
+      what: row.hit_what as boolean,
+      why: row.hit_why as boolean,
+      example: row.hit_example as boolean,
+    },
+  }));
 }
 
 // Registra uma sessão e reagenda o tópico. Chamada pelos runners no fim da
